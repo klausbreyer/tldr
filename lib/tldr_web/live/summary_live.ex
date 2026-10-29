@@ -190,14 +190,27 @@ defmodule TldrWeb.SummaryLive do
         {Words.t(@language, kind_word(@item.kind))}
       </div>
       <div class="min-w-0">
-        <h2 class={["font-semibold break-words", if(@single, do: "text-[15px]", else: "text-sm")]}>
-          {title(@item)}
-        </h2>
-        <div class={[
-          "font-mono text-xs break-all text-text",
-          if(@single, do: "mt-0.5 mb-5", else: "mt-px mb-1.5")
-        ]}>
-          {meta(@item)}
+        <div class={["flex items-start gap-3", if(@single, do: "mb-5", else: "mb-1.5")]}>
+          <img
+            :if={@item.video}
+            src={~p"/thumbnail/#{@item.video}"}
+            alt=""
+            class={["aspect-video shrink-0 object-cover", if(@single, do: "w-28", else: "w-24")]}
+          />
+          <div class="min-w-0">
+            <h2 class={[
+              "font-semibold break-words",
+              if(@single, do: "text-[15px]", else: "text-sm")
+            ]}>
+              {title(@item)}
+            </h2>
+            <div class={[
+              "font-mono text-xs break-all text-text",
+              if(@single, do: "mt-0.5", else: "mt-px")
+            ]}>
+              {meta(@item)}
+            </div>
+          </div>
         </div>
 
         <div :if={@item.status == :running} role="status">
@@ -298,6 +311,7 @@ defmodule TldrWeb.SummaryLive do
       id: System.unique_integer([:positive]),
       address: address,
       kind: kind,
+      video: Source.video_id(address),
       status: :running,
       started: System.monotonic_time(:millisecond)
     }

@@ -159,7 +159,10 @@ Before you call a change done, walk this list and say which entries applied.
    of `<article>`, `<main>` or `<body>`, sent to the model as text.
 3. A video goes to the model as its address in a `video_url` part, pinned to
    Google AI Studio, the only provider that accepts YouTube addresses.
-   `Tldr.YouTube.info/1` adds title and channel from oEmbed.
+   `Tldr.YouTube.info/1` adds title and channel from oEmbed. Its preview
+   image reaches the reader through `/thumbnail/:id`
+   (`TldrWeb.ThumbnailController`), so the reader's browser never talks to
+   YouTube.
 4. `Tldr.OpenRouter.complete/1` makes the one call with a strict JSON schema
    and returns `tldr` and `points`.
 
