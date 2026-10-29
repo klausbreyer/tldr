@@ -45,7 +45,9 @@ defmodule TldrWeb.Layouts do
     <footer class="flex flex-wrap items-baseline gap-x-4 gap-y-1.5 border-t border-line pt-4 pb-7 text-sm">
       <a href="/" class="hover:opacity-80"><.wordmark /></a>
       <span class="flex-1"></span>
-      <a href={~p"/privacy"} class="hover:text-brand">{TldrWeb.Words.t(@language, :privacy)}</a>
+      <a href={~p"/shortcut"} class="hover:text-brand">
+        {TldrWeb.Words.t(@language, :shortcut)}
+      </a>
       <a
         href="https://github.com/klausbreyer/tldr"
         target="_blank"
@@ -54,14 +56,7 @@ defmodule TldrWeb.Layouts do
       >
         {TldrWeb.Words.t(@language, :open_source)}
       </a>
-      <a
-        href="https://www.v01.io/pages/imprint/"
-        target="_blank"
-        rel="noopener"
-        class="hover:text-brand"
-      >
-        {TldrWeb.Words.t(@language, :legal_notice)}
-      </a>
+      <a href={~p"/privacy"} class="hover:text-brand">{TldrWeb.Words.t(@language, :privacy)}</a>
       <span>
         &copy; {@year}
         <a href="https://v01.io" target="_blank" rel="noopener" class="hover:text-brand">

@@ -21,6 +21,7 @@ defmodule TldrWeb.Router do
     pipe_through :browser
 
     live "/privacy", PrivacyLive
+    live "/shortcut", ShortcutLive
     # Last: every other path is the page, its addresses after the host.
     live "/*path", SummaryLive
   end
