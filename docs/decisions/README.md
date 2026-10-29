@@ -23,6 +23,7 @@ files say why.
 | [004](004-web-pages-are-fetched-here-and-sent-as-text.md) | A web page is fetched here and sent as plain text | 2026-10-29 |
 | [005](005-the-summary-is-structured-json-in-german.md) | The summary is structured JSON in German: one tldr, a few points (language part superseded by 008) | 2026-10-29 |
 | [006](006-the-key-lives-in-the-environment.md) | The key lives in the environment; dev reads the main checkout's `.env` | 2026-10-29 |
-| [007](007-one-page-a-single-summary-becomes-a-list.md) | One page; a single summary becomes a list from the second one | 2026-10-29 |
+| [007](007-one-page-a-single-summary-becomes-a-list.md) | One page; a single summary becomes a list from the second one (reload part superseded by 010) | 2026-10-29 |
 | [008](008-the-reader-chooses-german-or-english.md) | The reader chooses German or English; the browser decides first | 2026-10-29 |
 | [009](009-production-runs-on-bunny-and-main-deploys.md) | Production runs on Bunny Magic Containers; every push to main deploys | 2026-10-29 |
+| [010](010-the-addresses-live-in-the-address-bar.md) | The addresses live in the address bar, so the page can be shared | 2026-10-29 |

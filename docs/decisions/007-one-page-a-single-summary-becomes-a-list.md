@@ -1,7 +1,7 @@
 # ADR-007: One page; a single summary becomes a list from the second one
 
 ## Status
-Accepted
+Accepted. The "a reload empties it" part is superseded by ADR-010.
 
 ## Date
 2026-10-29

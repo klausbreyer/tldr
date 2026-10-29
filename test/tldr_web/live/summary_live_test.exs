@@ -72,6 +72,29 @@ defmodule TldrWeb.SummaryLiveTest do
     assert html =~ "Summary of Page /two."
   end
 
+  test "the addresses go into the address bar, so the page can be shared", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    view
+    |> form("#summarize", %{addresses: "https://example.com/one?x=1&y=2"})
+    |> render_submit()
+
+    assert_patch(view, "/?a=https://example.com/one?x=1%26y=2")
+
+    view |> form("#summarize", %{addresses: "https://example.com/two"}) |> render_submit()
+    assert_patch(view, "/?a=https://example.com/two+https://example.com/one?x=1%26y=2")
+  end
+
+  test "a shared address bar summarizes its addresses again, in the same order", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/?a=https://example.com/two+https://example.com/one")
+    assert html =~ "https://example.com/two"
+
+    html = render_async(view)
+    {two, _} = :binary.match(html, "Summary of Page /two.")
+    {one, _} = :binary.match(html, "Summary of Page /one.")
+    assert two < one
+  end
+
   test "a failure is a plain sentence", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 

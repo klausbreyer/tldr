@@ -174,10 +174,11 @@ browser's `Accept-Language`, else English (`put_language` in the router,
 The interface is one LiveView, `TldrWeb.SummaryLive` at `/`. One summary gets
 the single layout, two or more turn the page into a list, newest first. Each
 address runs in its own `start_async` task. The list lives in the LiveView
-process and a reload empties it (`docs/decisions/007`). Next to it,
-`TldrWeb.PrivacyLive` at `/privacy` says what happens to the reader's data.
-The footer and the wordmark live in `TldrWeb.Layouts` and both pages share
-them.
+process. Its addresses go into the address bar (`/?a=<address>+<address>`),
+and opening that address summarizes them again (`docs/decisions/010`). Next
+to it, `TldrWeb.PrivacyLive` at `/privacy` says what happens to the reader's
+data. The footer and the wordmark live in `TldrWeb.Layouts` and both pages
+share them.
 
 ## Where code lives
 
