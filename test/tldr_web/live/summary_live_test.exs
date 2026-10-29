@@ -208,10 +208,14 @@ defmodule TldrWeb.SummaryLiveTest do
     refute has_element?(view, "#summaries .tldr-pulse")
   end
 
-  test "a shared link shows the wordmark and a sentence in the reader's language", %{conn: conn} do
+  test "a shared link shows the wordmark and the words in the reader's language", %{conn: conn} do
     html = conn |> put_req_header("accept-language", "de") |> get(~p"/") |> html_response(200)
     assert html =~ ~r{<meta property="og:image" content="http://[^/"]+/images/og.png">}
     assert html =~ ~s(<meta name="twitter:card" content="summary_large_image">)
+
+    assert html =~
+             ~s(<meta property="og:title" content="tldr.tf, eine Zusammenfassung für jeden Link">)
+
     assert html =~ ~s(<meta property="og:description" content="Webseite oder YouTube)
   end
 end
