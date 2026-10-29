@@ -44,7 +44,7 @@ defmodule TldrWeb.SummaryLive do
     {:noreply,
      socket
      |> assign(submits: socket.assigns.submits + 1)
-     |> push_patch(to: share_path(socket.assigns.items), replace: true)}
+     |> push_patch(to: share_path(Enum.map(socket.assigns.items, & &1.address)), replace: true)}
   end
 
   @impl true
@@ -288,15 +288,17 @@ defmodule TldrWeb.SummaryLive do
     assign(socket, items: new_items ++ socket.assigns.items)
   end
 
-  # The page's addresses in the order shown, readable in the address bar:
-  # only what would break the query (`&`, `#`, `+`, `%`, spaces) is escaped.
-  # `Tldr.Source.addresses/1` splits them again.
-  defp share_path([]), do: "/"
+  @doc """
+  The path that summarizes `addresses`, readable in the address bar: only
+  what would break the query (`&`, `#`, `+`, `%`, spaces) is escaped.
+  `Tldr.Source.addresses/1` splits them again.
+  """
+  def share_path([]), do: "/"
 
-  defp share_path(items) do
+  def share_path(addresses) do
     "/?a=" <>
-      Enum.map_join(items, "+", fn item ->
-        URI.encode(item.address, &(URI.char_unreserved?(&1) or &1 in ~c":/?=@,;"))
+      Enum.map_join(addresses, "+", fn address ->
+        URI.encode(address, &(URI.char_unreserved?(&1) or &1 in ~c":/?=@,;"))
       end)
   end
 
