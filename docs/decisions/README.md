@@ -25,3 +25,4 @@ files say why.
 | [006](006-the-key-lives-in-the-environment.md) | The key lives in the environment; dev reads the main checkout's `.env` | 2026-10-29 |
 | [007](007-one-page-a-single-summary-becomes-a-list.md) | One page; a single summary becomes a list from the second one | 2026-10-29 |
 | [008](008-the-reader-chooses-german-or-english.md) | The reader chooses German or English; the browser decides first | 2026-10-29 |
+| [009](009-production-runs-on-bunny-and-main-deploys.md) | Production runs on Bunny Magic Containers; every push to main deploys | 2026-10-29 |

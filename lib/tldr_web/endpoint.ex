@@ -35,6 +35,7 @@ defmodule TldrWeb.Endpoint do
     plug Phoenix.CodeReloader
   end
 
+  plug :healthz
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
@@ -47,4 +48,15 @@ defmodule TldrWeb.Endpoint do
   plug Plug.Head
   plug Plug.Session, @session_options
   plug TldrWeb.Router
+
+  # Bunny's probes ask here over plain HTTP, so `config/prod.exs` keeps the
+  # path out of force_ssl. It answers before logging and the session.
+  defp healthz(%Plug.Conn{request_path: "/healthz"} = conn, _opts) do
+    conn
+    |> put_resp_header("cache-control", "no-store")
+    |> send_resp(200, "ok")
+    |> halt()
+  end
+
+  defp healthz(conn, _opts), do: conn
 end
