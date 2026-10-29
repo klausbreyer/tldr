@@ -45,7 +45,7 @@ defmodule TldrWeb.Layouts do
     <footer class="flex flex-wrap items-baseline gap-x-4 gap-y-1.5 border-t border-line pt-4 pb-7 text-sm">
       <a href="/" class="hover:opacity-80"><.wordmark /></a>
       <span class="flex-1"></span>
-      <a href="/privacy" class="hover:text-brand">{TldrWeb.Words.t(@language, :privacy)}</a>
+      <a href={~p"/privacy"} class="hover:text-brand">{TldrWeb.Words.t(@language, :privacy)}</a>
       <a
         href="https://www.v01.io/pages/imprint/"
         target="_blank"
