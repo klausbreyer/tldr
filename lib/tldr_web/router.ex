@@ -24,11 +24,6 @@ defmodule TldrWeb.Router do
     get "/thumbnail/:id", ThumbnailController, :show
   end
 
-  # `tldr.tf/<address>`: last, so it catches only what nothing else matched.
-  scope "/", TldrWeb do
-    get "/*path", PrefixController, :show
-  end
-
   # The reader's language: the cookie the language switch sets, else the
   # browser's, else English. The LiveView reads it from the session.
   defp put_language(conn, _opts) do

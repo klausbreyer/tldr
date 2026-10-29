@@ -15,14 +15,13 @@ defmodule Tldr.Source do
   @doc """
   Splits a paste into its addresses. A single-line input drops the line
   breaks of a pasted list, so an address that starts right after another
-  one is split off too. One that follows `=` stays: it is a query value of
-  the address around it (`google.com/url?q=https://...`).
+  one is split off too.
   """
   @spec addresses(String.t()) :: [String.t()]
   def addresses(paste) when is_binary(paste) do
     paste
     |> String.split()
-    |> Enum.flat_map(&String.split(&1, ~r{(?<!=)(?=https?://)}, trim: true))
+    |> Enum.flat_map(&String.split(&1, ~r{(?=https?://)}, trim: true))
   end
 
   @spec parse(String.t()) :: {:ok, t()} | {:error, :invalid_url}
