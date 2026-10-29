@@ -276,7 +276,7 @@ defmodule TldrWeb.SummaryLive do
   end
 
   # The page's addresses in the order shown, readable in the address bar:
-  # only what would break the query (`&`, `#`, `+`, spaces) is escaped.
+  # only what would break the query (`&`, `#`, `+`, `%`, spaces) is escaped.
   # `Tldr.Source.addresses/1` splits them again.
   defp share_path([]), do: "/"
 

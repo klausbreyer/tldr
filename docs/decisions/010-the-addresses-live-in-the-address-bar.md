@@ -38,7 +38,8 @@ crawler that unfurls a shared link costs nothing.
 - Rejected for now
 
 ## Consequences
-- Opening or reloading a shared address costs one model call per address.
+- Opening, reloading or reconnecting to a shared address costs one model
+  call per address. Before, a reconnect emptied the page.
 - The reader of a shared link can get a slightly different summary, and one
   in their own language.
 - The language is not in the address. ADR-008 still decides it.
