@@ -19,13 +19,12 @@ defmodule TldrWeb.PrivacyLiveTest do
     assert html =~ "Magic Containers by bunny.net in Frankfurt"
   end
 
-  test "the footer links the privacy page, the code and the legal notice of v01.io", %{
+  test "the footer links the privacy page and the code", %{
     conn: conn
   } do
     {:ok, view, _html} = live(conn, ~p"/")
 
     assert has_element?(view, ~s(footer a[href="/privacy"]))
     assert has_element?(view, ~s(footer a[href="https://github.com/klausbreyer/tldr"]))
-    assert has_element?(view, ~s(footer a[href="https://www.v01.io/pages/imprint/"]))
   end
 end
