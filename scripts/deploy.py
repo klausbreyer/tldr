@@ -93,7 +93,10 @@ def deploy(config, image_tag):
     container = the_container(app)
 
     image = config["image"]
-    digest = api("POST", "/mc/registries/digest", {**image, "tag": image_tag})["digest"]
+    digest = api("POST", "/mc/registries/digest", {
+        "registryId": image["imageRegistryId"], "imageNamespace": image["imageNamespace"],
+        "imageName": image["imageName"], "tag": image_tag,
+    })["digest"]
     require(bool(re.fullmatch(r"sha256:[0-9a-f]{64}", digest)), "Invalid registry digest.")
     if os.environ.get("IMAGE_DIGEST"):
         require(digest == os.environ["IMAGE_DIGEST"], "Registry digest differs from the built image.")
