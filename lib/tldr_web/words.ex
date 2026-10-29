@@ -27,6 +27,7 @@ defmodule TldrWeb.Words do
       privacy_models:
         "Für die Zusammenfassung schicke ich den Text der Seite oder die Adresse des Videos über OpenRouter an Gemini-Modelle von Google.",
       privacy_hosting: "tldr läuft bei bunny.net auf Magic Containers in Frankfurt.",
+      open_source: "Open Source",
       legal_notice: "Impressum",
       invalid_url: "Das ist keine gültige Adresse.",
       blocked: "Die Seite blockt automatische Abrufe.",
@@ -60,6 +61,7 @@ defmodule TldrWeb.Words do
       privacy_models:
         "To make the summary, I send the text of the page or the address of the video through OpenRouter to Gemini models from Google.",
       privacy_hosting: "tldr runs on Magic Containers by bunny.net in Frankfurt.",
+      open_source: "Open source",
       legal_notice: "Legal notice",
       invalid_url: "That is not a valid address.",
       blocked: "The page blocks automated requests.",

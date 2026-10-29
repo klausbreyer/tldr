@@ -47,6 +47,14 @@ defmodule TldrWeb.Layouts do
       <span class="flex-1"></span>
       <a href={~p"/privacy"} class="hover:text-brand">{TldrWeb.Words.t(@language, :privacy)}</a>
       <a
+        href="https://github.com/klausbreyer/tldr"
+        target="_blank"
+        rel="noopener"
+        class="hover:text-brand"
+      >
+        {TldrWeb.Words.t(@language, :open_source)}
+      </a>
+      <a
         href="https://www.v01.io/pages/imprint/"
         target="_blank"
         rel="noopener"
