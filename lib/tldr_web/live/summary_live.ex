@@ -4,8 +4,9 @@ defmodule TldrWeb.SummaryLive do
 
   One summary gets the calm single layout. From the second one on the page
   becomes a list, newest first. Every address runs in its own async task,
-  so several run at once. The list lives in this process only: a reload
-  empties it (`docs/decisions/007`).
+  so several run at once. The list lives in this process only, but its
+  addresses go into the address bar (`/?a=<address>+<address>`). Opening
+  that address, or reloading it, summarizes them again (`docs/decisions/010`).
   """
 
   use TldrWeb, :live_view
@@ -19,6 +20,15 @@ defmodule TldrWeb.SummaryLive do
     {:ok, assign(socket, page_title: "tldr.tf", items: [], submits: 0, language: language)}
   end
 
+  # A shared address bar fills an empty page. Later patches come from
+  # `summarize` itself and change nothing here.
+  @impl true
+  def handle_params(%{"a" => paste}, _uri, %{assigns: %{items: []}} = socket)
+      when is_binary(paste),
+      do: {:noreply, summarize(socket, paste)}
+
+  def handle_params(_params, _uri, socket), do: {:noreply, socket}
+
   # Switches the words and the language of the next summaries. The ones
   # already there stay as they are; summarizing them again would cost money.
   @impl true
@@ -28,19 +38,13 @@ defmodule TldrWeb.SummaryLive do
 
   @impl true
   def handle_event("summarize", %{"addresses" => paste}, socket) do
-    new_items = Enum.map(Source.addresses(paste), &new_item/1)
-    opts = [language: socket.assigns.language]
-
-    socket =
-      Enum.reduce(new_items, socket, fn item, socket ->
-        start_async(socket, {:summary, item.id}, fn ->
-          Summarizer.summarize(item.address, opts)
-        end)
-      end)
+    socket = summarize(socket, paste)
 
     # A new input id renders a fresh, empty, focused input after every submit.
     {:noreply,
-     assign(socket, items: new_items ++ socket.assigns.items, submits: socket.assigns.submits + 1)}
+     socket
+     |> assign(submits: socket.assigns.submits + 1)
+     |> push_patch(to: share_path(socket.assigns.items), replace: true)}
   end
 
   @impl true
@@ -254,6 +258,33 @@ defmodule TldrWeb.SummaryLive do
       </div>
     </article>
     """
+  end
+
+  # Starts one task per address in the paste and puts them on top.
+  defp summarize(socket, paste) do
+    new_items = Enum.map(Source.addresses(paste), &new_item/1)
+    opts = [language: socket.assigns.language]
+
+    socket =
+      Enum.reduce(new_items, socket, fn item, socket ->
+        start_async(socket, {:summary, item.id}, fn ->
+          Summarizer.summarize(item.address, opts)
+        end)
+      end)
+
+    assign(socket, items: new_items ++ socket.assigns.items)
+  end
+
+  # The page's addresses in the order shown, readable in the address bar:
+  # only what would break the query (`&`, `#`, `+`, spaces) is escaped.
+  # `Tldr.Source.addresses/1` splits them again.
+  defp share_path([]), do: "/"
+
+  defp share_path(items) do
+    "/?a=" <>
+      Enum.map_join(items, "+", fn item ->
+        URI.encode(item.address, &(URI.char_unreserved?(&1) or &1 in ~c":/?=@,;"))
+      end)
   end
 
   defp new_item(address) do

@@ -66,8 +66,8 @@ defmodule TldrWeb.Layouts do
 
   @doc """
   The logo: "tldr" in the accent, ".tf" in the text color. The one at the
-  top of the summary page is not a link, because a reload would empty the
-  list; the footer links it home.
+  top of the summary page is not a link, because going home would empty
+  the list; the footer links it home.
   """
   attr :class, :string, default: nil
 
