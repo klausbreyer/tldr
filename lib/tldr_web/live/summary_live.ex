@@ -72,8 +72,8 @@ defmodule TldrWeb.SummaryLive do
         class={[
           "mx-auto flex min-h-dvh flex-col px-5",
           if(@single,
-            do: "max-w-[680px] pt-[10vh] sm:pt-[15vh]",
-            else: "max-w-[860px] pt-6"
+            do: "max-w-[680px] pt-5 sm:pt-[15vh]",
+            else: "max-w-[860px] pt-5 sm:pt-6"
           )
         ]}
       >
