@@ -105,4 +105,11 @@ defmodule TldrWeb.SummaryLiveTest do
     {:ok, _view, html} = live(conn, ~p"/")
     assert html =~ "Link einfügen"
   end
+
+  test "a shared link shows the wordmark and a sentence in the reader's language", %{conn: conn} do
+    html = conn |> put_req_header("accept-language", "de") |> get(~p"/") |> html_response(200)
+    assert html =~ ~r{<meta property="og:image" content="http://[^/"]+/images/og.png">}
+    assert html =~ ~s(<meta name="twitter:card" content="summary_large_image">)
+    assert html =~ ~s(<meta property="og:description" content="Webseite oder YouTube)
+  end
 end
