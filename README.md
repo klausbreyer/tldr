@@ -62,6 +62,9 @@ The default model is `google/gemini-3.8-flash`. An article costs a fraction
 of a cent. A video costs about 90 input tokens per second, so an hour is
 roughly 300,000 tokens, around 0.25 USD.
 
+The [Google model comparison](docs/benchmarks/2026-10-29-google-models.md)
+records why cheaper Flash Lite models did not replace the default.
+
 ## Architecture
 
 See `AGENTS.md` for how it works and `docs/decisions/` for why.
