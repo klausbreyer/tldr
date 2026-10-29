@@ -142,7 +142,7 @@ defmodule TldrWeb.SummaryLive do
 
     ~H"""
     <footer class="flex flex-wrap items-baseline gap-x-4 gap-y-1.5 border-t border-line pt-4 pb-7 text-sm">
-      <span class="font-semibold">tldr.tf</span>
+      <a href="/" class="hover:opacity-80"><.wordmark /></a>
       <span class="flex-1"></span>
       <span>
         &copy; {@year}
@@ -156,8 +156,9 @@ defmodule TldrWeb.SummaryLive do
 
   attr :class, :string, default: nil
 
-  # The logo: "tldr" in the accent, ".tf" dimmed. Not a link, because a
-  # reload would empty the list.
+  # The logo: "tldr" in the accent, ".tf" in the text color. The one at the
+  # top is not a link, because a reload would empty the list; the footer
+  # links it home.
   defp wordmark(assigns) do
     ~H"""
     <span class={["font-wordmark leading-none font-bold", @class]}>
