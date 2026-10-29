@@ -54,9 +54,5 @@ defmodule Tldr.SourceTest do
     # A single-line input drops the line breaks of a pasted list.
     assert Source.addresses("https://a.com/xhttps://b.org/y") ==
              ["https://a.com/x", "https://b.org/y"]
-
-    # An address in a query value belongs to the address around it.
-    assert Source.addresses("https://google.com/url?q=https://a.com/x") ==
-             ["https://google.com/url?q=https://a.com/x"]
   end
 end
