@@ -34,6 +34,7 @@ defmodule TldrWeb.SummaryLiveTest do
     {:ok, view, html} = live(conn, ~p"/")
     assert html =~ ~s(data-layout="single")
     assert html =~ ~s(href="https://v01.io")
+    assert has_element?(view, ~s(footer a[href="/"]), "tldr.tf")
 
     view |> form("#summarize", %{addresses: "https://example.com/one"}) |> render_submit()
     html = render_async(view)
