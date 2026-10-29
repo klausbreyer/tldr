@@ -26,4 +26,5 @@ files say why.
 | [007](007-one-page-a-single-summary-becomes-a-list.md) | One page; a single summary becomes a list from the second one (reload part superseded by 010) | 2026-10-29 |
 | [008](008-the-reader-chooses-german-or-english.md) | The reader chooses German or English; the browser decides first | 2026-10-29 |
 | [009](009-production-runs-on-bunny-and-main-deploys.md) | Production runs on Bunny Magic Containers; every push to main deploys | 2026-10-29 |
-| [010](010-the-addresses-live-in-the-address-bar.md) | The addresses live in the address bar, so the page can be shared | 2026-10-29 |
+| [010](010-the-addresses-live-in-the-address-bar.md) | The addresses live in the address bar, so the page can be shared (form superseded by 011) | 2026-10-29 |
+| [011](011-the-addresses-follow-the-host.md) | The addresses follow the host: `tldr.tf/<address><address>` | 2026-10-29 |

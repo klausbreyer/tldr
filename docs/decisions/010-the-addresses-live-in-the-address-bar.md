@@ -1,7 +1,8 @@
 # ADR-010: The addresses live in the address bar
 
 ## Status
-Accepted. Supersedes the "a reload empties it" part of ADR-007.
+Accepted. Supersedes the "a reload empties it" part of ADR-007. The
+`/?a=` form is superseded by ADR-011.
 
 ## Date
 2026-10-29
