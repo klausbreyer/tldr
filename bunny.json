@@ -1,0 +1,13 @@
+{
+  "app_id": "1IKrsZEVi2UIYlP",
+  "url": "https://tldr.tf",
+  "image": {
+    "imageRegistryId": "11881",
+    "imageNamespace": "klausbreyer",
+    "imageName": "tldr"
+  },
+  "environment": {
+    "PHX_HOST": "tldr.tf",
+    "PORT": "8080"
+  }
+}

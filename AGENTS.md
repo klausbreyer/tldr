@@ -197,6 +197,9 @@ process and a reload empties it (`docs/decisions/007`).
 - tldr reads its configuration from environment variables at boot. In
   production a missing `OPENROUTER_API_KEY` stops the boot with a message
   that names it. `README.md` holds the table. Keep it true.
+- Production is `https://tldr.tf` on Bunny Magic Containers. Every push to
+  `main` deploys it (`.github/workflows/deploy.yml`, `scripts/deploy.py`,
+  `docs/decisions/009`). A merge is a release.
 - The model is `@model` in `Tldr.Summarizer`. Changing it is a decision
   (`docs/decisions/002`).
 
