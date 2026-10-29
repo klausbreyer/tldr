@@ -7,8 +7,21 @@ defmodule TldrWeb.Router do
     plug :fetch_live_flash
     plug :put_root_layout, html: {TldrWeb.Layouts, :root}
     plug :protect_from_forgery
-    plug :put_secure_browser_headers
+    plug :browser_headers
     plug :put_language
+  end
+
+  # Allow only the configured Chrome extension to show tldr in its side panel.
+  defp browser_headers(conn, _opts) do
+    ancestors =
+      case Application.get_env(:tldr, :chrome_extension_id) do
+        nil -> "'self'"
+        id -> "'self' chrome-extension://#{id}"
+      end
+
+    put_secure_browser_headers(conn, %{
+      "content-security-policy" => "base-uri 'self'; frame-ancestors #{ancestors};"
+    })
   end
 
   # Video preview images come through tldr, so the reader's browser never
@@ -31,8 +44,13 @@ defmodule TldrWeb.Router do
   defp put_language(conn, _opts) do
     conn = fetch_cookies(conn)
 
+    cookie =
+      if get_req_header(conn, "sec-fetch-dest") == ["iframe"],
+        do: "tldr_embed_language",
+        else: "tldr_language"
+
     language =
-      Tldr.Language.known(conn.cookies["tldr_language"]) ||
+      Tldr.Language.known(conn.cookies[cookie]) ||
         Tldr.Language.from_accept_language(
           conn
           |> get_req_header("accept-language")

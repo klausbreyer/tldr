@@ -12,6 +12,7 @@ test: prepare
 # What a pull request needs: warnings as errors, formatting, tests.
 check: prepare
 	mix precommit
+	node --test test/extension/*.test.mjs
 
 kill-port-4000:
 	@pids="$$(lsof -tiTCP:4000 -sTCP:LISTEN 2>/dev/null)"; \

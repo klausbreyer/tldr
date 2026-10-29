@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "tldr",
+  "version": "0.1.0",
+  "minimum_chrome_version": "116",
+  "description": "__MSG_description__",
+  "default_locale": "en",
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://tldr.tf/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "__MSG_summarizeLink__"
+  },
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; frame-src https://tldr.tf;"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArHA7xiTRJpn/FSCHehtccYyeAS5UpbwXGRYocvI+H6h/YPJzSx0jTiNnJ9P/XRcjSbcOPN8AXFRGC6ZL1ZC6bZaE9ecZNAe4uNVdTjVtFJNaiGL+PEBE2N0D95R4ZN0i+Wgf1DeAjs2B9j3QAI9WM6Lds8QT2NQ+45bUQTUIzXpld4mBPxmoSd5hBYDLUH4p91dvlm6079pD45ua9ilhyC1A8qLSBKEWfxrz9pTy3/24YiqpySDoXmCMFigvtOEbZ+/IOVqbxcHmHvu/u5OJB9FdlIVv53UeJl4fGOcRlYNLYNgrHCwx14Djm/fi0uqYETGSo6T4LaLSk7LOWZEmjwIDAQAB"
+}

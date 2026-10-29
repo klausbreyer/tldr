@@ -1,0 +1,4 @@
+{
+  "description": {"message": "Summarize web pages and YouTube videos beside the page. One sentence and a few points, in English or German."},
+  "summarizeLink": {"message": "Summarize with tldr"}
+}

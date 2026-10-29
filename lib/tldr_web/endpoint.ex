@@ -11,9 +11,22 @@ defmodule TldrWeb.Endpoint do
     same_site: "Lax"
   ]
 
+  # Cross-site WebSockets need SameSite=None. Keep the iframe session separate
+  # from ordinary tabs and partition it by the embedding site.
+  @embedded_session_options Keyword.merge(@session_options,
+                              key: "_tldr_embed_key",
+                              same_site: "None",
+                              secure: true,
+                              extra: "Partitioned"
+                            )
+
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
+
+  socket "/embedded-live", Phoenix.LiveView.Socket,
+    websocket: [connect_info: [session: @embedded_session_options]],
+    longpoll: [connect_info: [session: @embedded_session_options]]
 
   # Serve at "/" the static files from "priv/static" directory.
   #
@@ -46,8 +59,17 @@ defmodule TldrWeb.Endpoint do
 
   plug Plug.MethodOverride
   plug Plug.Head
-  plug Plug.Session, @session_options
+  plug :browser_session
   plug TldrWeb.Router
+
+  defp browser_session(conn, _opts) do
+    options =
+      if get_req_header(conn, "sec-fetch-dest") == ["iframe"],
+        do: @embedded_session_options,
+        else: @session_options
+
+    Plug.Session.call(conn, Plug.Session.init(options))
+  end
 
   # Bunny's probes ask here over plain HTTP, so `config/prod.exs` keeps the
   # path out of force_ssl. It answers before logging and the session.
