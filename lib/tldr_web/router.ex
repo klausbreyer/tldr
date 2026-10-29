@@ -15,6 +15,7 @@ defmodule TldrWeb.Router do
     pipe_through :browser
 
     live "/", SummaryLive
+    live "/privacy", PrivacyLive
   end
 
   # The reader's language: the cookie the language switch sets, else the

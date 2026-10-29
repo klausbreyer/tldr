@@ -78,7 +78,7 @@ defmodule TldrWeb.SummaryLive do
         ]}
       >
         <div class="flex-1 pb-16">
-          <.wordmark :if={@single} class="mb-8 block text-5xl sm:text-6xl" />
+          <Layouts.wordmark :if={@single} class="mb-8 block text-5xl sm:text-6xl" />
 
           <.form
             for={%{}}
@@ -93,7 +93,7 @@ defmodule TldrWeb.SummaryLive do
             ]}
           >
             <span :if={@single} class="text-text" aria-hidden="true">→</span>
-            <.wordmark :if={!@single} class="text-[19px]" />
+            <Layouts.wordmark :if={!@single} class="text-[19px]" />
             <input
               type="text"
               id={"addresses-#{@submits}"}
@@ -129,41 +129,9 @@ defmodule TldrWeb.SummaryLive do
           </div>
         </div>
 
-        <.footer />
+        <Layouts.footer language={@language} />
       </div>
     </Layouts.app>
-    """
-  end
-
-  # Like the footer of texttile.blog: the product on the left, who made it
-  # on the right.
-  defp footer(assigns) do
-    assigns = assign(assigns, year: Date.utc_today().year)
-
-    ~H"""
-    <footer class="flex flex-wrap items-baseline gap-x-4 gap-y-1.5 border-t border-line pt-4 pb-7 text-sm">
-      <a href="/" class="hover:opacity-80"><.wordmark /></a>
-      <span class="flex-1"></span>
-      <span>
-        &copy; {@year}
-        <a href="https://v01.io" target="_blank" rel="noopener" class="hover:text-brand">
-          Klaus Breyer
-        </a>
-      </span>
-    </footer>
-    """
-  end
-
-  attr :class, :string, default: nil
-
-  # The logo: "tldr" in the accent, ".tf" in the text color. The one at the
-  # top is not a link, because a reload would empty the list; the footer
-  # links it home.
-  defp wordmark(assigns) do
-    ~H"""
-    <span class={["font-wordmark leading-none font-bold", @class]}>
-      <span class="text-brand">tldr</span><span class="text-text">.tf</span>
-    </span>
     """
   end
 

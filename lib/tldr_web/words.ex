@@ -22,6 +22,11 @@ defmodule TldrWeb.Words do
       copied: "Kopiert",
       open: "Quelle öffnen",
       language: "Sprache",
+      privacy: "Datenschutz",
+      privacy_stored: "Ich speichere deine Daten nicht.",
+      privacy_models:
+        "Für die Zusammenfassung schicke ich den Text der Seite oder die Adresse des Videos über OpenRouter an Gemini-Modelle von Google.",
+      legal_notice: "Impressum",
       invalid_url: "Das ist keine gültige Adresse.",
       blocked: "Die Seite blockt automatische Abrufe.",
       not_found: "Die Seite gibt es nicht (404).",
@@ -49,6 +54,11 @@ defmodule TldrWeb.Words do
       copied: "Copied",
       open: "Open source",
       language: "Language",
+      privacy: "Privacy",
+      privacy_stored: "I do not store your data.",
+      privacy_models:
+        "To make the summary, I send the text of the page or the address of the video through OpenRouter to Gemini models from Google.",
+      legal_notice: "Legal notice",
       invalid_url: "That is not a valid address.",
       blocked: "The page blocks automated requests.",
       not_found: "The page does not exist (404).",

@@ -33,6 +33,53 @@ defmodule TldrWeb.Layouts do
   end
 
   @doc """
+  The footer of every page. Like the one of texttile.blog: the product on
+  the left, who made it on the right.
+  """
+  attr :language, :string, required: true
+
+  def footer(assigns) do
+    assigns = assign(assigns, year: Date.utc_today().year)
+
+    ~H"""
+    <footer class="flex flex-wrap items-baseline gap-x-4 gap-y-1.5 border-t border-line pt-4 pb-7 text-sm">
+      <a href="/" class="hover:opacity-80"><.wordmark /></a>
+      <span class="flex-1"></span>
+      <a href="/privacy" class="hover:text-brand">{TldrWeb.Words.t(@language, :privacy)}</a>
+      <a
+        href="https://www.v01.io/pages/imprint/"
+        target="_blank"
+        rel="noopener"
+        class="hover:text-brand"
+      >
+        {TldrWeb.Words.t(@language, :legal_notice)}
+      </a>
+      <span>
+        &copy; {@year}
+        <a href="https://v01.io" target="_blank" rel="noopener" class="hover:text-brand">
+          Klaus Breyer
+        </a>
+      </span>
+    </footer>
+    """
+  end
+
+  @doc """
+  The logo: "tldr" in the accent, ".tf" in the text color. The one at the
+  top of the summary page is not a link, because a reload would empty the
+  list; the footer links it home.
+  """
+  attr :class, :string, default: nil
+
+  def wordmark(assigns) do
+    ~H"""
+    <span class={["font-wordmark leading-none font-bold", @class]}>
+      <span class="text-brand">tldr</span><span class="text-text">.tf</span>
+    </span>
+    """
+  end
+
+  @doc """
   Shows the flash group with standard titles and content.
 
   ## Examples
