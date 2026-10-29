@@ -9,11 +9,13 @@ defmodule TldrWeb.PrivacyLiveTest do
 
     assert html =~ "Ich speichere deine Daten nicht."
     assert html =~ "OpenRouter"
+    assert html =~ "bunny.net auf Magic Containers in Frankfurt"
 
     {:ok, _view, html} =
       conn |> put_req_header("accept-language", "en") |> live(~p"/privacy")
 
     assert html =~ "I do not store your data."
+    assert html =~ "Magic Containers by bunny.net in Frankfurt"
   end
 
   test "the footer links the privacy page and the legal notice of v01.io", %{conn: conn} do
