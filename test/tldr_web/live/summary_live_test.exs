@@ -20,8 +20,11 @@ defmodule TldrWeb.SummaryLiveTest do
     # can be told apart.
     Req.Test.stub(Tldr.OpenRouter, fn conn ->
       {:ok, body, conn} = Plug.Conn.read_body(conn)
-      [_system, %{"content" => [%{"text" => text} | _]}] = Jason.decode!(body)["messages"]
-      [_, title] = Regex.run(~r/Title: (.*)/, text)
+
+      [_system, %{"content" => [_instruction, %{"text" => data} | _]}] =
+        Jason.decode!(body)["messages"]
+
+      title = Jason.decode!(data)["title"]
       answer = %{"tldr" => "Summary of #{title}.", "points" => ["A point.", "Another point."]}
 
       Req.Test.json(conn, %{"choices" => [%{"message" => %{"content" => Jason.encode!(answer)}}]})
@@ -142,6 +145,55 @@ defmodule TldrWeb.SummaryLiveTest do
 
     {:ok, _view, html} = live(conn, ~p"/")
     assert html =~ "Link einfügen"
+  end
+
+  test "an invalid model answer shows an error in both languages", %{conn: conn} do
+    Req.Test.stub(Tldr.OpenRouter, fn conn ->
+      answer = %{"tldr" => "Text", "points" => [%{"unexpected" => "object"}]}
+      Req.Test.json(conn, %{"choices" => [%{"message" => %{"content" => Jason.encode!(answer)}}]})
+    end)
+
+    for language <- ["de", "en"] do
+      {:ok, view, _html} = conn |> put_req_header("accept-language", language) |> live(~p"/")
+      view |> form("#summarize", %{addresses: "https://example.com"}) |> render_submit()
+      render_async(view)
+
+      assert has_element?(view, "#summaries", TldrWeb.Words.t(language, :invalid_answer))
+      refute has_element?(view, "#summaries ul")
+    end
+  end
+
+  test "a slow video stays in the waiting state until its summary arrives", %{conn: conn} do
+    test = self()
+
+    Req.Test.stub(
+      Tldr.YouTube,
+      &Req.Test.json(&1, %{"title" => "A video", "author_name" => "A channel"})
+    )
+
+    Req.Test.stub(Tldr.OpenRouter, fn conn ->
+      send(test, {:video_waiting, self()})
+
+      receive do
+        :finish_video ->
+          answer = %{"tldr" => "The video summary.", "points" => []}
+
+          Req.Test.json(conn, %{
+            "choices" => [%{"message" => %{"content" => Jason.encode!(answer)}}]
+          })
+      end
+    end)
+
+    {:ok, view, _html} = live(conn, ~p"/")
+    view |> form("#summarize", %{addresses: "https://youtu.be/jNQXAC9IVRw"}) |> render_submit()
+    assert_receive {:video_waiting, task}, 1_000
+    assert has_element?(view, "#summaries", "Watching the video")
+    assert has_element?(view, "#summaries .tldr-pulse")
+
+    send(task, :finish_video)
+    render_async(view)
+    assert has_element?(view, "#summaries", "The video summary.")
+    refute has_element?(view, "#summaries .tldr-pulse")
   end
 
   test "a shared link shows the wordmark and a sentence in the reader's language", %{conn: conn} do
