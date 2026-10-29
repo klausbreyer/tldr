@@ -68,7 +68,7 @@ Use this language in code, in the UI and when talking to me.
 ## The three ways to hurt yourself
 
 1. **Taking port 4000, or killing by pattern.** Port 4000 belongs to Klaus and
-   to `mix phx.server`. Never bind it and never kill its process. Use 4441 to
+   to `make start`. Never bind it and never kill its process. Use 4441 to
    4449 for your own servers (`PORT=4441 mix phx.server`). Never `pkill -f`,
    never `pgrep | kill`, never kill a PID you found by matching a name or a
    worktree path. Kill only a PID you captured at spawn.
@@ -106,9 +106,11 @@ Before you call a change done, walk this list and say which entries applied.
 
 ## Dev servers
 
-- `mix setup` installs dependencies and assets.
-- `mix phx.server` runs the development server on port 4000. That one is
-  Klaus's. Start your own with `PORT=4441` to `4449`.
+- `make prepare` installs dependencies and assets.
+- `make start` frees port 4000, prepares, runs the development server there
+  and opens the browser. That one is Klaus's: never run `make start` or
+  `make kill-port-4000` yourself. Start your own with
+  `PORT=4441 mix phx.server`, up to 4449.
 - Development needs only the key. A git-ignored `.env` in the main checkout is
   loaded from every worktree, and real environment variables win over it.
 - While a server you started is running, every answer you give ends with
@@ -121,8 +123,8 @@ Before you call a change done, walk this list and say which entries applied.
 - Test the core with unit tests under `test/tldr`, with `Req.Test` stubs for
   every outside call. Test the interface with LiveView tests under
   `test/tldr_web`.
-- Run `mix precommit` before a pull request. It compiles with warnings as
-  errors, formats and runs the tests.
+- Run `make check` (`mix precommit`) before a pull request. It compiles with
+  warnings as errors, formats and runs the tests.
 - A green test is not the end. Use the change in a real browser on your own
   server before you call it done, with a real address.
 - Finish every UI change with the shared `visual-qa` skill in a headless

@@ -80,8 +80,13 @@ defmodule Tldr.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "assets.setup", "assets.build"],
-      "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["compile", "tailwind tldr", "esbuild tldr"],
+      "assets.setup": [
+        "tailwind.install --if-missing",
+        &sign_tailwind/1,
+        "esbuild.install --if-missing"
+      ],
+      # The setup runs first, so a fresh worktree never runs an unsigned Tailwind.
+      "assets.build": ["compile", "assets.setup", "tailwind tldr", "esbuild tldr"],
       "assets.deploy": [
         "tailwind tldr --minify",
         "esbuild tldr --minify",
@@ -89,5 +94,18 @@ defmodule Tldr.MixProject do
       ],
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
     ]
+  end
+
+  # The macOS Tailwind binary ships with a broken signature, and macOS kills it
+  # at start (exit 137). An ad hoc signature on this machine repairs it.
+  defp sign_tailwind(_args) do
+    with {:unix, :darwin} <- :os.type(),
+         path = Tailwind.bin_path(),
+         {_, status} when status != 0 <-
+           System.cmd("codesign", ["--verify", path], stderr_to_stdout: true),
+         {output, status} when status != 0 <-
+           System.cmd("codesign", ["--force", "--sign", "-", path], stderr_to_stdout: true) do
+      Mix.raise("Could not sign #{path}: #{output}")
+    end
   end
 end

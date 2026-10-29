@@ -8,13 +8,16 @@ reading and watching. No database.
 
 1. Install Elixir 1.19 and Erlang/OTP 28.
 2. `cp .env.example .env` and put your OpenRouter key into it.
-3. `mix setup`
-4. `mix phx.server` and open http://localhost:4000
+3. `make start`: prepares everything, starts the server on port 4000 and
+   opens http://localhost:4000
 
 ## Commands
 
 | Command | Description |
 | --- | --- |
+| `make start` | Free port 4000, prepare, start the server, open the browser |
+| `make prepare` | Install dependencies and assets (`mix setup`) |
+| `make check` | What a pull request needs (`mix precommit`) |
 | `mix phx.server` | Development server on port 4000 (`PORT` changes it) |
 | `mix tldr <address> ...` | Summarize addresses on the command line |
 | `mix tldr --model <id> <address>` | Same, with another OpenRouter model |
