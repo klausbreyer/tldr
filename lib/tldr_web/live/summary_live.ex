@@ -5,8 +5,8 @@ defmodule TldrWeb.SummaryLive do
   One summary gets the calm single layout. From the second one on the page
   becomes a list, newest first. Every address runs in its own async task,
   so several run at once. The list lives in this process only, but its
-  addresses go into the address bar (`/?a=<address>+<address>`). Opening
-  that address, or reloading it, summarizes them again (`docs/decisions/010`).
+  addresses go into the address bar (`/<address><address>`). Opening that
+  address, or reloading it, summarizes them again (`docs/decisions/011`).
   """
 
   use TldrWeb, :live_view
@@ -20,12 +20,19 @@ defmodule TldrWeb.SummaryLive do
     {:ok, assign(socket, page_title: "tldr.tf", items: [], submits: 0, language: language)}
   end
 
+  defmodule NotFound do
+    defexception message: "not an address", plug_status: 404
+  end
+
   # A shared address bar fills an empty page. Later patches come from
   # `summarize` itself and change nothing here.
   @impl true
-  def handle_params(%{"a" => paste}, _uri, %{assigns: %{items: []}} = socket)
-      when is_binary(paste),
-      do: {:noreply, summarize(socket, paste)}
+  def handle_params(_params, uri, %{assigns: %{items: []}} = socket) do
+    case paste(uri) do
+      nil -> {:noreply, socket}
+      paste -> {:noreply, summarize(socket, paste)}
+    end
+  end
 
   def handle_params(_params, _uri, socket), do: {:noreply, socket}
 
@@ -44,7 +51,7 @@ defmodule TldrWeb.SummaryLive do
     {:noreply,
      socket
      |> assign(submits: socket.assigns.submits + 1)
-     |> push_patch(to: share_path(Enum.map(socket.assigns.items, & &1.address)), replace: true)}
+     |> push_patch(to: share_path(socket.assigns.items), replace: true)}
   end
 
   @impl true
@@ -288,17 +295,32 @@ defmodule TldrWeb.SummaryLive do
     assign(socket, items: new_items ++ socket.assigns.items)
   end
 
-  @doc """
-  The path that summarizes `addresses`, readable in the address bar: only
-  what would break the query (`&`, `#`, `+`, `%`, spaces) is escaped.
-  `Tldr.Source.addresses/1` splits them again.
-  """
-  def share_path([]), do: "/"
+  # Everything after the host is the paste, its query string included, so
+  # the query of an address stays its own. Some proxies merge `//` into `/`.
+  # The bare page has no paste; any other path is not found.
+  defp paste(uri) do
+    case URI.parse(uri) do
+      %URI{path: path} when path in [nil, "/"] ->
+        nil
 
-  def share_path(addresses) do
-    "/?a=" <>
-      Enum.map_join(addresses, "+", fn address ->
-        URI.encode(address, &(URI.char_unreserved?(&1) or &1 in ~c":/?=@,;"))
+      %URI{path: "/" <> path, query: query} ->
+        paste = if query, do: path <> "?" <> query, else: path
+        paste = String.replace(paste, ~r{(https?:)/(?!/)}, "\\1//")
+        if paste =~ ~r{\Ahttps?://}, do: paste, else: raise(NotFound)
+    end
+  end
+
+  # The page's addresses in the order shown, back to back after the host.
+  # `Tldr.Source.addresses/1` splits them again at each `https://`, so each
+  # one goes in its full form. A fragment would hide the rest of the address
+  # from the server; an address that is not valid is left out.
+  defp share_path(items) do
+    "/" <>
+      Enum.map_join(items, fn item ->
+        case Source.parse(item.address) do
+          {:ok, {_kind, url}} -> url |> String.split("#") |> hd()
+          {:error, _} -> ""
+        end
       end)
   end
 

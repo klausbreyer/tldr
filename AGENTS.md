@@ -177,10 +177,9 @@ browser's `Accept-Language`, else English (`put_language` in the router,
 The interface is one LiveView, `TldrWeb.SummaryLive` at `/`. One summary gets
 the single layout, two or more turn the page into a list, newest first. Each
 address runs in its own `start_async` task. The list lives in the LiveView
-process. Its addresses go into the address bar (`/?a=<address>+<address>`),
-and opening that address summarizes them again (`docs/decisions/010`).
-A link with `tldr.tf/` in front of it, or several in a row, redirects to
-that form (`TldrWeb.PrefixController`, `docs/decisions/011`). Next
+process. Its addresses go into the address bar (`/<address><address>`),
+and opening that address summarizes them again (`docs/decisions/011`). So
+`tldr.tf/` in front of a link, or of several in a row, summarizes them. Next
 to it, `TldrWeb.PrivacyLive` at `/privacy` says what happens to the reader's
 data. The footer and the wordmark live in `TldrWeb.Layouts` and both pages
 share them.

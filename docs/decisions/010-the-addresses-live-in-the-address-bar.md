@@ -2,7 +2,7 @@
 
 ## Status
 Accepted. Supersedes the "a reload empties it" part of ADR-007. The
-rejected prefix address is superseded by ADR-011.
+`/?a=` form is superseded by ADR-011.
 
 ## Date
 2026-10-29

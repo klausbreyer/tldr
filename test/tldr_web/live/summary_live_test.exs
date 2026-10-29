@@ -79,18 +79,19 @@ defmodule TldrWeb.SummaryLiveTest do
     {:ok, view, _html} = live(conn, ~p"/")
 
     view
-    |> form("#summarize", %{addresses: "https://example.com/one?x=1&y=2"})
+    |> form("#summarize", %{addresses: "https://example.com/one?x=1&y=2#part"})
     |> render_submit()
 
-    assert_patch(view, "/?a=https://example.com/one?x=1%26y=2")
+    assert_patch(view, "/https://example.com/one?x=1&y=2")
 
-    view |> form("#summarize", %{addresses: "https://example.com/two"}) |> render_submit()
-    assert_patch(view, "/?a=https://example.com/two+https://example.com/one?x=1%26y=2")
+    view |> form("#summarize", %{addresses: "example.com/two"}) |> render_submit()
+    assert_patch(view, "/https://example.com/twohttps://example.com/one?x=1&y=2")
   end
 
-  test "a shared address bar summarizes its addresses again, in the same order", %{conn: conn} do
-    {:ok, view, html} = live(conn, "/?a=https://example.com/two+https://example.com/one")
+  test "a shared address summarizes its addresses again, in the same order", %{conn: conn} do
+    {:ok, view, html} = live(conn, "/https://example.com/twohttps://example.com/one?x=1&y=2")
     assert html =~ "https://example.com/two"
+    assert html =~ "https://example.com/one?x=1&amp;y=2"
 
     html = render_async(view)
     {two, _} = :binary.match(html, "Summary of Page /two.")
@@ -98,13 +99,24 @@ defmodule TldrWeb.SummaryLiveTest do
     assert two < one
   end
 
+  test "a shared address survives a proxy that merges its double slashes", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/https:/example.com/one")
+    assert render_async(view) =~ "Summary of Page /one."
+  end
+
+  test "a path that is not an address is not found", %{conn: conn} do
+    assert_error_sent 404, fn -> get(conn, "/nothing-here") end
+  end
+
   test "a video shows its preview image through tldr, a page none", %{conn: conn} do
     Req.Test.stub(Tldr.YouTube, &Req.Test.json(&1, %{"title" => "A talk"}))
     {:ok, view, _html} = live(conn, ~p"/")
 
     view
-    |> form("#summarize", %{addresses: "youtu.be/jNQXAC9IVRw https://example.com/one"})
+    |> form("#summarize", %{addresses: "youtu.be/jNQXAC9IVRw?si=x https://example.com/one"})
     |> render_submit()
+
+    assert_patch(view, "/https://www.youtube.com/watch?v=jNQXAC9IVRwhttps://example.com/one")
 
     # The image is there while the video is still being watched.
     assert has_element?(view, ~s(img[src="/thumbnail/jNQXAC9IVRw"]))

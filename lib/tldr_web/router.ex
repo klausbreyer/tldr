@@ -11,22 +11,18 @@ defmodule TldrWeb.Router do
     plug :put_language
   end
 
-  scope "/", TldrWeb do
-    pipe_through :browser
-
-    live "/", SummaryLive
-    live "/privacy", PrivacyLive
-  end
-
   # Video preview images come through tldr, so the reader's browser never
   # talks to YouTube.
   scope "/", TldrWeb do
     get "/thumbnail/:id", ThumbnailController, :show
   end
 
-  # `tldr.tf/<address>`: last, so it catches only what nothing else matched.
   scope "/", TldrWeb do
-    get "/*path", PrefixController, :show
+    pipe_through :browser
+
+    live "/privacy", PrivacyLive
+    # Last: every other path is the page, its addresses after the host.
+    live "/*path", SummaryLive
   end
 
   # The reader's language: the cookie the language switch sets, else the
