@@ -32,6 +32,12 @@ defmodule Tldr.SourceTest do
              {:ok, {:web, "https://www.youtube.com/@veritasium"}}
   end
 
+  test "a video address gives its id, any other address none" do
+    assert Source.video_id("youtu.be/jNQXAC9IVRw?si=abc") == "jNQXAC9IVRw"
+    assert Source.video_id("https://www.youtube.com/@veritasium") == nil
+    assert Source.video_id("kein-link") == nil
+  end
+
   test "anything that is not an http address is refused" do
     assert Source.parse("") == {:error, :invalid_url}
     assert Source.parse("not a url") == {:error, :invalid_url}

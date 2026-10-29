@@ -95,6 +95,21 @@ defmodule TldrWeb.SummaryLiveTest do
     assert two < one
   end
 
+  test "a video shows its preview image through tldr, a page none", %{conn: conn} do
+    Req.Test.stub(Tldr.YouTube, &Req.Test.json(&1, %{"title" => "A talk"}))
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    view
+    |> form("#summarize", %{addresses: "youtu.be/jNQXAC9IVRw https://example.com/one"})
+    |> render_submit()
+
+    # The image is there while the video is still being watched.
+    assert has_element?(view, ~s(img[src="/thumbnail/jNQXAC9IVRw"]))
+    render_async(view)
+    assert has_element?(view, ~s(img[src="/thumbnail/jNQXAC9IVRw"]))
+    assert [_one] = view |> render() |> Floki.parse_document!() |> Floki.find("img")
+  end
+
   test "a failure is a plain sentence", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 

@@ -9,6 +9,7 @@ defmodule TldrWeb.PrivacyLiveTest do
 
     assert html =~ "Ich speichere deine Daten nicht."
     assert html =~ "OpenRouter"
+    assert html =~ "Dein Browser spricht dabei nicht mit YouTube."
     assert html =~ "bunny.net auf Magic Containers in Frankfurt"
 
     {:ok, _view, html} =

@@ -18,6 +18,12 @@ defmodule TldrWeb.Router do
     live "/privacy", PrivacyLive
   end
 
+  # Video preview images come through tldr, so the reader's browser never
+  # talks to YouTube.
+  scope "/", TldrWeb do
+    get "/thumbnail/:id", ThumbnailController, :show
+  end
+
   # The reader's language: the cookie the language switch sets, else the
   # browser's, else English. The LiveView reads it from the session.
   defp put_language(conn, _opts) do

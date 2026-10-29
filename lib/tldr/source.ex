@@ -32,12 +32,21 @@ defmodule Tldr.Source do
     with %URI{scheme: scheme, host: host} = uri when scheme in ["http", "https"] <-
            URI.parse(input),
          true <- public_host?(host) do
-      case video_id(uri) do
+      case id_in(uri) do
         nil -> {:ok, {:web, URI.to_string(uri)}}
         id -> {:ok, {:youtube, "https://www.youtube.com/watch?v=" <> id}}
       end
     else
       _ -> {:error, :invalid_url}
+    end
+  end
+
+  @doc "The id of the video behind an address, or nil for anything else."
+  @spec video_id(String.t()) :: String.t() | nil
+  def video_id(input) do
+    case parse(input) do
+      {:ok, {:youtube, "https://www.youtube.com/watch?v=" <> id}} -> id
+      _ -> nil
     end
   end
 
@@ -47,9 +56,9 @@ defmodule Tldr.Source do
 
   defp public_host?(_), do: false
 
-  defp video_id(%URI{host: "youtu.be", path: "/" <> id}), do: valid_id(id)
+  defp id_in(%URI{host: "youtu.be", path: "/" <> id}), do: valid_id(id)
 
-  defp video_id(%URI{host: host, path: path, query: query}) when host in @youtube_hosts do
+  defp id_in(%URI{host: host, path: path, query: query}) when host in @youtube_hosts do
     case String.split(path || "", "/", trim: true) do
       ["watch"] -> query |> Kernel.||("") |> URI.decode_query() |> Map.get("v") |> valid_id()
       [prefix, id] when prefix in ~w(shorts live embed) -> valid_id(id)
@@ -57,7 +66,7 @@ defmodule Tldr.Source do
     end
   end
 
-  defp video_id(_uri), do: nil
+  defp id_in(_uri), do: nil
 
   defp valid_id(id) when is_binary(id), do: if(id =~ @video_id, do: id)
   defp valid_id(_), do: nil
