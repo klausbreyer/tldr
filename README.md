@@ -41,6 +41,8 @@ reading and watching. No database.
 `extension/` contains a Manifest V3 extension. The icon summarizes the current
 page. The link context menu summarizes its target. Both show the existing
 tldr page in a side panel, with no separate API or summary interface.
+The side panel hides the address form. Its logo and footer links open the
+website in a new tab. The language switch stays available.
 
 The extension passes addresses as `https://tldr.tf/https://example.com/`.
 It has no history, content scripts, or persistent storage. Opening a source

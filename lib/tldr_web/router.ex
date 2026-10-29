@@ -19,7 +19,9 @@ defmodule TldrWeb.Router do
         id -> "'self' chrome-extension://#{id}"
       end
 
-    put_secure_browser_headers(conn, %{
+    conn
+    |> put_session(:embedded, get_req_header(conn, "sec-fetch-dest") == ["iframe"])
+    |> put_secure_browser_headers(%{
       "content-security-policy" => "base-uri 'self'; frame-ancestors #{ancestors};"
     })
   end

@@ -17,7 +17,15 @@ defmodule TldrWeb.SummaryLive do
   @impl true
   def mount(_params, session, socket) do
     language = Language.known(session["language"]) || Language.default()
-    {:ok, assign(socket, page_title: "tldr.tf", items: [], submits: 0, language: language)}
+
+    {:ok,
+     assign(socket,
+       page_title: "tldr.tf",
+       items: [],
+       submits: 0,
+       language: language,
+       embedded: session["embedded"] == true
+     )}
   end
 
   defmodule NotFound do
@@ -89,9 +97,20 @@ defmodule TldrWeb.SummaryLive do
         ]}
       >
         <div class="flex-1 pb-16">
-          <Layouts.wordmark :if={@single} class="mb-8 block text-5xl sm:text-6xl" />
+          <a
+            :if={@embedded}
+            id="panel-home"
+            href="https://tldr.tf"
+            target="_blank"
+            rel="noopener"
+            class="mb-8 block w-fit hover:opacity-80"
+          >
+            <Layouts.wordmark class="text-5xl sm:text-6xl" />
+          </a>
+          <Layouts.wordmark :if={@single && !@embedded} class="mb-8 block text-5xl sm:text-6xl" />
 
           <.form
+            :if={!@embedded}
             for={%{}}
             id="summarize"
             phx-submit="summarize"
@@ -130,8 +149,8 @@ defmodule TldrWeb.SummaryLive do
             <.languages :if={!@single} language={@language} />
           </.form>
 
-          <div :if={@single} class="mt-4 flex items-baseline gap-4 text-sm text-text">
-            <p class="flex-1">{if @items == [], do: Words.t(@language, :hint)}</p>
+          <div :if={@single || @embedded} class="mt-4 flex items-baseline gap-4 text-sm text-text">
+            <p class="flex-1">{if @items == [] && !@embedded, do: Words.t(@language, :hint)}</p>
             <.languages language={@language} />
           </div>
 
@@ -140,7 +159,7 @@ defmodule TldrWeb.SummaryLive do
           </div>
         </div>
 
-        <Layouts.footer language={@language} />
+        <Layouts.footer language={@language} embedded={@embedded} />
       </div>
     </Layouts.app>
     """
