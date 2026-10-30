@@ -16,7 +16,10 @@ if (origin.protocol === "http:" && origin.hostname !== "localhost") {
 const source = fileURLToPath(new URL("../extension/", import.meta.url));
 const output = resolve(destination);
 await mkdir(output); // Refuse to overwrite an existing directory.
-await cp(source, output, { recursive: true });
+await cp(source, output, {
+  recursive: true,
+  filter: (path) => path !== resolve(source, "store"),
+});
 const manifest = JSON.parse(await readFile(`${output}/manifest.json`, "utf8"));
 manifest.host_permissions = [`${origin.origin}/*`];
 manifest.content_security_policy.extension_pages = `script-src 'self'; object-src 'none'; frame-src ${origin.origin};`;
