@@ -79,8 +79,11 @@ The manifest includes the Web Store public key for a stable extension ID:
 `jnhafnmghjfpcbmijehgdoiekilggkdj`. It contains no private key. `bunny.json`
 sets `CHROME_EXTENSION_ID` to this ID for production deployments.
 
-Package only the contents of `extension/` for the store. Store review and
-deployment are separate steps. `make check` also runs the extension tests.
+`extension/store/` holds the store images, listing text, and uploaded ZIP.
+The preparation script excludes this directory. To build a store package,
+run the script without a local origin and zip the output directory's contents.
+Store review and deployment are separate steps. `make check` also runs the
+extension tests.
 
 ## Production
 
