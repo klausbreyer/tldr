@@ -8,6 +8,7 @@
   },
   "environment": {
     "PHX_HOST": "tldr.tf",
-    "PORT": "8080"
+    "PORT": "8080",
+    "CHROME_EXTENSION_ID": "jnhafnmghjfpcbmijehgdoiekilggkdj"
   }
 }

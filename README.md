@@ -75,9 +75,9 @@ Embedded pages require HTTPS, except on `localhost` for development.
 
 For the hosted site, load `extension/` directly and configure the server with
 its extension ID. Until that server change is deployed, Chrome blocks the iframe.
-The manifest includes a public key for a stable development ID. It contains
-no private key. Before store submission, replace it with the Web Store public
-key and configure `CHROME_EXTENSION_ID` with the assigned store ID.
+The manifest includes the Web Store public key for a stable extension ID:
+`jnhafnmghjfpcbmijehgdoiekilggkdj`. It contains no private key. `bunny.json`
+sets `CHROME_EXTENSION_ID` to this ID for production deployments.
 
 Package only the contents of `extension/` for the store. Store review and
 deployment are separate steps. `make check` also runs the extension tests.
