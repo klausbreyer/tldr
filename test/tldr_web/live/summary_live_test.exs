@@ -48,6 +48,34 @@ defmodule TldrWeb.SummaryLiveTest do
     assert html =~ "Another point."
   end
 
+  test "the side panel hides the form and opens navigation outside the panel", %{conn: conn} do
+    conn = put_req_header(conn, "sec-fetch-dest", "iframe")
+    {:ok, view, html} = live(conn, "/https://example.com/one")
+
+    refute html =~ ~s(id="summarize")
+    refute has_element?(view, "#summarize")
+
+    assert has_element?(
+             view,
+             ~s(a#panel-home[href="https://tldr.tf"][target="_blank"]),
+             "tldr.tf"
+           )
+
+    assert has_element?(view, ~s(footer a[href="https://tldr.tf/shortcut"][target="_blank"]))
+    assert has_element?(view, ~s(footer a[href="https://tldr.tf/privacy"][target="_blank"]))
+    refute has_element?(view, "footer a:not([target='_blank'])")
+    assert render_async(view) =~ "Summary of Page /one."
+    assert view |> element("button", "DE") |> render_click() =~ "Kopieren"
+    refute has_element?(view, "#summarize")
+  end
+
+  test "the empty side panel has no paste hint", %{conn: conn} do
+    {:ok, view, html} = conn |> put_req_header("sec-fetch-dest", "iframe") |> live("/")
+    refute has_element?(view, "#summarize")
+    refute html =~ TldrWeb.Words.t("en", :hint)
+    assert has_element?(view, "#panel-home")
+  end
+
   test "a second summary turns the page into a list, newest first", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 

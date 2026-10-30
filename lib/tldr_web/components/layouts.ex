@@ -37,15 +37,23 @@ defmodule TldrWeb.Layouts do
   the left, who made it on the right.
   """
   attr :language, :string, required: true
+  attr :embedded, :boolean, default: false
 
   def footer(assigns) do
-    assigns = assign(assigns, year: Date.utc_today().year)
+    assigns =
+      assign(assigns,
+        year: Date.utc_today().year,
+        site: if(assigns.embedded, do: "https://tldr.tf", else: ""),
+        target: if(assigns.embedded, do: "_blank")
+      )
 
     ~H"""
     <footer class="flex flex-wrap items-baseline gap-x-4 gap-y-1.5 border-t border-line pt-4 pb-7 text-sm">
-      <a href="/" class="hover:opacity-80"><.wordmark /></a>
+      <a href={@site <> "/"} target={@target} rel="noopener" class="hover:opacity-80">
+        <.wordmark />
+      </a>
       <span class="flex-1"></span>
-      <a href={~p"/shortcut"} class="hover:text-brand">
+      <a href={@site <> ~p"/shortcut"} target={@target} rel="noopener" class="hover:text-brand">
         {TldrWeb.Words.t(@language, :shortcut)}
       </a>
       <a
@@ -56,7 +64,9 @@ defmodule TldrWeb.Layouts do
       >
         {TldrWeb.Words.t(@language, :open_source)}
       </a>
-      <a href={~p"/privacy"} class="hover:text-brand">{TldrWeb.Words.t(@language, :privacy)}</a>
+      <a href={@site <> ~p"/privacy"} target={@target} rel="noopener" class="hover:text-brand">
+        {TldrWeb.Words.t(@language, :privacy)}
+      </a>
       <span>
         &copy; {@year}
         <a href="https://v01.io" target="_blank" rel="noopener" class="hover:text-brand">
@@ -69,8 +79,8 @@ defmodule TldrWeb.Layouts do
 
   @doc """
   The logo: "tldr" in the accent, ".tf" in the text color. The one at the
-  top of the summary page is not a link, because going home would empty
-  the list; the footer links it home.
+  top of the ordinary summary page is not a link, because going home would
+  empty the list. In the side panel, it opens the website in a new tab.
   """
   attr :class, :string, default: nil
 

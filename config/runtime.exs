@@ -46,6 +46,14 @@ if config_env() == :dev do
     ]
 end
 
+if id = System.get_env("CHROME_EXTENSION_ID") do
+  unless Regex.match?(~r/\A[a-p]{32}\z/, id) do
+    raise "CHROME_EXTENSION_ID must contain 32 lowercase letters from a to p."
+  end
+
+  config :tldr, :chrome_extension_id, id
+end
+
 if config_env() == :prod do
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

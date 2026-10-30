@@ -26,7 +26,8 @@ import {hooks as colocatedHooks} from "phoenix-colocated/tldr"
 import topbar from "../vendor/topbar"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
-const liveSocket = new LiveSocket("/live", Socket, {
+const embedded = window.self !== window.top
+const liveSocket = new LiveSocket(embedded ? "/embedded-live" : "/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
   hooks: {...colocatedHooks},
@@ -55,7 +56,9 @@ window.addEventListener("tldr:copy", ({target}) => {
 // The language switch: remember the choice for the next visit and keep
 // the page's lang attribute true. The LiveView switches the words itself.
 window.addEventListener("tldr:language", ({detail}) => {
-  document.cookie = `tldr_language=${detail.language}; path=/; max-age=31536000; samesite=lax`
+  const name = embedded ? "tldr_embed_language" : "tldr_language"
+  const attributes = embedded ? "samesite=none; secure; partitioned" : "samesite=lax"
+  document.cookie = `${name}=${detail.language}; path=/; max-age=31536000; ${attributes}`
   document.documentElement.lang = detail.language
 })
 

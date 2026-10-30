@@ -34,6 +34,53 @@ reading and watching. No database.
 | `PORT` | no | HTTP port, default 4000 |
 | `SECRET_KEY_BASE` | prod | `mix phx.gen.secret` |
 | `PHX_HOST` | prod | Public host name |
+| `CHROME_EXTENSION_ID` | no | Allow this Chrome extension to embed tldr. No external embedding by default. |
+
+## Chrome extension
+
+`extension/` contains a Manifest V3 extension. The icon summarizes the current
+page. The link context menu summarizes its target. Both show the existing
+tldr page in a side panel, with no separate API or summary interface.
+The side panel hides the address form. Its logo and footer links open the
+website in a new tab. The language switch stays available.
+
+The extension passes addresses as `https://tldr.tf/https://example.com/`.
+It has no history, content scripts, or persistent storage. Opening a source
+again can start another summary, as on the website.
+
+For a local preview (Node.js 22 or later):
+
+```sh
+node scripts/prepare-extension.mjs /tmp/tldr-extension http://localhost:4448
+CHROME_EXTENSION_ID=PASTE_PRINTED_ID PORT=4448 mix phx.server
+```
+
+Choose a free port from 4441 to 4449. Use the same port in both commands.
+The preparation command creates a new directory and refuses to overwrite one.
+
+1. Open `chrome://extensions` in Chrome 116 or later.
+2. Enable Developer mode.
+3. Select **Load unpacked** and choose `/tmp/tldr-extension`.
+4. Pin tldr and click its icon on a web page or YouTube video.
+5. Right-click a link and select **Summarize with tldr**.
+
+Unsupported addresses, such as Chrome settings, open the empty tldr page.
+The extension requests `activeTab`, `contextMenus`, `sidePanel`, and access
+only to the tldr host. The extension does not read cookies. The embedded
+page uses separate secure, partitioned session and language cookies. Its
+language preference is separate from the website preference. LiveView uses
+`/embedded-live` in an iframe and `/live` in an ordinary tab.
+
+Embedded pages require HTTPS, except on `localhost` for development.
+
+For the hosted site, load `extension/` directly and configure the server with
+its extension ID. Until that server change is deployed, Chrome blocks the iframe.
+The manifest includes the Web Store public key for a stable extension ID:
+`jnhafnmghjfpcbmijehgdoiekilggkdj`. It contains no private key. `bunny.json`
+sets `CHROME_EXTENSION_ID` to this ID for production deployments.
+
+Package only the contents of `extension/` for the store. Store review and
+deployment are separate steps. `make check` also runs the extension tests.
 
 ## Production
 
