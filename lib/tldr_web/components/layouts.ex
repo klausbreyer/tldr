@@ -53,6 +53,14 @@ defmodule TldrWeb.Layouts do
         <.wordmark />
       </a>
       <span class="flex-1"></span>
+      <a
+        href="https://chromewebstore.google.com/detail/jnhafnmghjfpcbmijehgdoiekilggkdj"
+        target="_blank"
+        rel="noopener"
+        class="hover:text-brand"
+      >
+        {TldrWeb.Words.t(@language, :chrome_extension)}
+      </a>
       <a href={@site <> ~p"/shortcut"} target={@target} rel="noopener" class="hover:text-brand">
         {TldrWeb.Words.t(@language, :shortcut)}
       </a>
