@@ -43,6 +43,8 @@ page. The link context menu summarizes its target. Both show the existing
 tldr page in a side panel, with no separate API or summary interface.
 The side panel hides the address form. Its logo and footer links open the
 website in a new tab. The language switch stays available.
+The panel closes when you leave the page that opened it, including YouTube
+video changes. Reloads and section links keep it open. Click the icon to reopen it.
 
 The extension passes addresses as `https://tldr.tf/https://example.com/`.
 It has no history, content scripts, or persistent storage. Opening a source
@@ -65,9 +67,10 @@ The preparation command creates a new directory and refuses to overwrite one.
 5. Right-click a link and select **Summarize with tldr**.
 
 Unsupported addresses, such as Chrome settings, open the empty tldr page.
-The extension requests `activeTab`, `contextMenus`, `sidePanel`, and access
-only to the tldr host. The extension does not read cookies. The embedded
-page uses separate secure, partitioned session and language cookies. Its
+The extension requests `activeTab`, `contextMenus`, `sidePanel`, and
+`webNavigation`, with host access only to tldr. Navigation events close the panel when its page changes.
+These events are not stored or sent to tldr. The extension does not read cookies.
+The embedded page uses separate secure, partitioned session and language cookies. Its
 language preference is separate from the website preference. LiveView uses
 `/embedded-live` in an iframe and `/live` in an ordinary tab.
 

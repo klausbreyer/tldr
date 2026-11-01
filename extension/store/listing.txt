@@ -4,7 +4,7 @@ Short description: Summarize web pages and YouTube videos beside the page. One s
 Description:
 Get the main claims of a web page or YouTube video without leaving the source.
 
-Click the tldr toolbar icon to summarize the current page, or right-click a link and choose "Summarize with tldr". The summary opens in Chrome’s side panel beside the original page.
+Click the tldr toolbar icon to summarize the current page, or right-click a link and choose "Summarize with tldr". The summary opens in Chrome’s side panel beside the original page. It closes when you navigate to another page.
 
 Each summary contains one sentence and three to six short points. Switch between English and German, and copy a summary when you need it.
 
@@ -18,6 +18,7 @@ Permission explanations:
 activeTab: Read the address of the current tab only after the user clicks the extension icon.
 contextMenus: Add a link menu action that summarizes the selected link.
 sidePanel: Show the summary next to the original page.
+webNavigation: Close the side panel when the user leaves the page that opened it, including YouTube video changes without a reload. Navigation events are not stored or transmitted.
 https://tldr.tf/*: Embed the tldr service in the side panel.
 
 Remote content: The side panel embeds https://tldr.tf in an iframe. Extension code is bundled in the package. The hosted application creates and displays the summary and does not call extension APIs.
@@ -28,7 +29,7 @@ Data disclosures: user-selected web addresses are transmitted to tldr.tf to perf
 German description:
 Erfasse die wichtigsten Aussagen einer Webseite oder eines YouTube-Videos, ohne die Originalseite zu verlassen.
 
-Klicke auf das tldr-Symbol, um die aktuelle Seite zusammenzufassen. Oder klicke mit der rechten Maustaste auf einen Link und wähle „Mit tldr zusammenfassen“. Die Zusammenfassung erscheint im Chrome-Seitenpanel neben der Originalseite.
+Klicke auf das tldr-Symbol, um die aktuelle Seite zusammenzufassen. Oder klicke mit der rechten Maustaste auf einen Link und wähle „Mit tldr zusammenfassen“. Die Zusammenfassung erscheint im Chrome-Seitenpanel neben der Originalseite. Wenn du zu einer anderen Seite wechselst, schließt es sich.
 
 Du erhältst einen Satz und drei bis sechs kurze Punkte. Wechsle zwischen Deutsch und Englisch und kopiere die Zusammenfassung bei Bedarf.
 
@@ -45,7 +46,11 @@ icon.png: Store icon, 128 x 128 pixels.
 screenshot.png: Summary interface with example data, 1280 x 800 pixels.
 promo-small.png: Small promotional tile, 440 x 280 pixels.
 promo-large.png: Large promotional tile, 1400 x 560 pixels.
-tldr-0.1.0.zip: Uploaded release package. The manifest omits the public key because the store assigns its own ID.
+tldr-0.1.0.zip: Previous release package. The manifest omits the public key because the store assigns its own ID.
+
+tldr-0.1.1.zip: Release package with automatic closing after navigation.
 
 Reviewer instructions:
 No login or setup is needed. Open https://example.com and click the tldr toolbar icon. The summary appears in the side panel. Right-click the page’s Learn more link and choose Summarize with tldr to summarize that target. Also try a public YouTube video. DE/EN changes the language for new summaries. Copy copies the result. The logo and footer links open separate tabs. The hosted iframe cannot access extension APIs. The listing screenshot uses example data.
+
+Version 0.1.1: Navigate to another page or YouTube video after opening a summary. The panel closes. Reloads and section links keep it open. Click the icon to reopen it.
