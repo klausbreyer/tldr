@@ -236,6 +236,75 @@ defmodule TldrWeb.SummaryLiveTest do
     refute has_element?(view, "#summaries .tldr-pulse")
   end
 
+  test "a new summary goes to the browser to keep", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+    view |> form("#summarize", %{addresses: "example.com/one#part"}) |> render_submit()
+    render_async(view)
+
+    # Under the address as the address bar shows it, without the fragment.
+    assert_push_event(view, "tldr:keep", %{
+      url: "https://example.com/one",
+      language: "en",
+      summary: %{tldr: "Summary of Page /one.", kind: :web}
+    })
+  end
+
+  test "a kept summary shows at once with its date, and refresh runs it again", %{conn: conn} do
+    kept = %{
+      "url" => "https://example.com/one",
+      "language" => "en",
+      # 2026-11-07 13:32 UTC, shown in UTC+1
+      "saved" => 1_794_058_320_000,
+      "summary" => %{
+        "url" => "https://example.com/one",
+        "kind" => "web",
+        "title" => "Kept page",
+        "tldr" => "The kept summary.",
+        "points" => ["A kept point."]
+      }
+    }
+
+    conn = put_connect_params(conn, %{"kept" => [kept], "offset" => 60})
+    {:ok, view, _html} = live(conn, "/https://example.com/onehttps://example.com/two")
+
+    assert has_element?(view, "#summaries", "The kept summary.")
+    assert has_element?(view, "#summaries", "saved Nov 7, 2026, 14:32")
+    html = render_async(view)
+    assert html =~ "Summary of Page /two."
+    refute html =~ "Summary of Page /one."
+
+    view |> element("#summaries button", "Refresh") |> render_click()
+    html = render_async(view)
+    assert html =~ "Summary of Page /one."
+    refute html =~ "The kept summary."
+    refute has_element?(view, "#summaries button", "Refresh")
+  end
+
+  test "a tab that comes back gets the summary that kept running", %{conn: conn} do
+    test = self()
+
+    Req.Test.stub(Tldr.OpenRouter, fn conn ->
+      send(test, {:model, self()})
+
+      receive do
+        :finish ->
+          answer = Jason.encode!(%{"tldr" => "Done while away.", "points" => []})
+          Req.Test.json(conn, %{"choices" => [%{"message" => %{"content" => answer}}]})
+      end
+    end)
+
+    conn = put_connect_params(conn, %{"tab" => "tab-#{System.unique_integer()}"})
+    {:ok, gone, _html} = live(conn, "/https://example.com/one")
+    assert_receive {:model, model}
+    Process.unlink(gone.pid)
+    Process.exit(gone.pid, :kill)
+
+    {:ok, back, _html} = live(conn, "/https://example.com/one")
+    send(model, :finish)
+    assert render_async(back) =~ "Done while away."
+    refute_received {:model, _}
+  end
+
   test "a shared link shows the wordmark and the words in the reader's language", %{conn: conn} do
     html = conn |> put_req_header("accept-language", "de") |> get(~p"/") |> html_response(200)
     assert html =~ ~r{<meta property="og:image" content="http://[^/"]+/images/og.png">}

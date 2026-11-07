@@ -8,6 +8,7 @@ defmodule TldrWeb.PrivacyLiveTest do
       conn |> put_req_header("accept-language", "de") |> live(~p"/privacy")
 
     assert html =~ "Ich speichere deine Daten nicht."
+    assert html =~ "Dein Browser behält deine letzten Zusammenfassungen"
     assert html =~ "OpenRouter"
     assert html =~ "Dein Browser spricht dabei nicht mit YouTube."
     assert html =~ "bunny.net auf Magic Containers in Frankfurt"
