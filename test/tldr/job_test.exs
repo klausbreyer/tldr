@@ -26,9 +26,13 @@ defmodule Tldr.JobTest do
     %{key: make_ref()}
   end
 
+  # The first summary in a fresh VM loads Req and Floki, which can take
+  # longer than assert_receive's default 100 ms on a slow CI runner.
+  @wait 1000
+
   test "a job goes on when its page is gone, and the page gets it on return", %{key: key} do
     {:ok, page} = Task.start(fn -> Job.summarize(key, "https://example.com/a") end)
-    assert_receive {:model, model}
+    assert_receive {:model, model}, @wait
     Process.exit(page, :kill)
 
     back = Task.async(fn -> Job.summarize(key, "https://example.com/a") end)
@@ -41,12 +45,12 @@ defmodule Tldr.JobTest do
 
   test "fresh runs the summary again", %{key: key} do
     first = Task.async(fn -> Job.summarize(key, "https://example.com/a") end)
-    assert_receive {:model, model}
+    assert_receive {:model, model}, @wait
     send(model, {:answer, "First."})
     assert {:ok, %{tldr: "First."}} = Task.await(first)
 
     again = Task.async(fn -> Job.summarize(key, "https://example.com/a", fresh: true) end)
-    assert_receive {:model, model}
+    assert_receive {:model, model}, @wait
     send(model, {:answer, "Second."})
     assert {:ok, %{tldr: "Second."}} = Task.await(again)
   end

@@ -193,7 +193,11 @@ share them.
 - `lib/tldr/` holds the core: `source`, `page`, `you_tube`, `open_router`,
   `summarizer`, `job`, `summary`, `config`.
 - `lib/tldr_web/live/summary_live.ex` is the interface,
-  `lib/tldr_web/live/privacy_live.ex` the privacy page. `assets/js/app.js`
+  `lib/tldr_web/live/privacy_live.ex` the privacy page,
+  `lib/tldr_web/live/shortcut_live.ex` the shortcut page. Every LiveView
+  mounts `TldrWeb.LanguageHook`, which sets the language and handles the
+  switch. `TldrWeb.Layouts` holds the shared column, header and footer.
+  `assets/js/app.js`
   holds the browser code: the copy button, the language cookie and the kept
   summaries.
 - `assets/css/app.css` holds the colors of v01.io as Tailwind theme colors

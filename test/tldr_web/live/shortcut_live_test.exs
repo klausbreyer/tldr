@@ -11,14 +11,25 @@ defmodule TldrWeb.ShortcutLiveTest do
 
       {:ok, page, _html} = live(conn, "/shortcut")
       assert has_element?(page, "h1", "Shortcut")
-      assert has_element?(page, "#shortcut-ios h2", "iOS")
-      assert has_element?(page, "#shortcut-mac h2", "macOS")
+      assert has_element?(page, "#shortcut-ios h2", "iPhone")
+      assert has_element?(page, "#shortcut-mac h2", "Mac")
 
       assert has_element?(
                page,
                ~s(a[href="https://www.icloud.com/shortcuts/0e2631559fa8434aab1c95af874f6029"]),
                download
              )
+    end
+  end
+
+  test "the steps set the names of buttons and menus apart, without quotes", %{conn: conn} do
+    for {language, name} <- [{"de", "Kurzbefehle"}, {"en", "Shortcuts"}] do
+      conn = put_req_header(conn, "accept-language", language)
+      {:ok, page, _html} = live(conn, "/shortcut")
+
+      assert has_element?(page, "#shortcut-mac li strong", name)
+      assert has_element?(page, "#shortcut-mac li .hero-arrow-up-on-square")
+      refute render(element(page, "#shortcut-mac")) =~ ~r/[„“”]/u
     end
   end
 end

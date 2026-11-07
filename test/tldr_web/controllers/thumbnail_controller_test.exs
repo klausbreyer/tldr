@@ -4,7 +4,7 @@ defmodule TldrWeb.ThumbnailControllerTest do
   test "passes the preview image of a video on from YouTube", %{conn: conn} do
     Req.Test.stub(Tldr.YouTube, fn conn ->
       assert conn.host == "i.ytimg.com"
-      assert conn.request_path == "/vi/jNQXAC9IVRw/mqdefault.jpg"
+      assert conn.request_path == "/vi/jNQXAC9IVRw/hqdefault.jpg"
 
       conn
       |> Plug.Conn.put_resp_content_type("image/jpeg", nil)

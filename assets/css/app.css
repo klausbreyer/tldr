@@ -102,13 +102,17 @@
 /* Make LiveView wrapper divs transparent for layout */
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
-/* The colors of v01.io: VS Code dark with a rose accent. The accent is
-   "brand", not "primary": daisyUI's themes define --color-primary too. */
+/* The colors of v01.io: VS Code dark with a rose accent. The text is a
+   step brighter than v01.io's #d4d4d4, so hierarchy by size alone reads
+   crisply. The accent is "brand", not "primary": daisyUI's themes define
+   --color-primary too. */
 @theme {
   --color-brand: var(--color-rose-600);
   --color-bg: #1e1e1e;
-  --color-text: #d4d4d4;
+  --color-text: #e5e5e5;
   --color-line: #3d3e3d;
+  --color-line-strong: #6a6b6a;
+  --color-line-focus: #a3a3a3;
   --font-wordmark: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -127,7 +131,7 @@
    is loading. */
 @keyframes tldr-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .2; transform: scale(.6); }
+  50% { opacity: .65; transform: scale(.85); }
 }
 .tldr-pulse { animation: tldr-pulse 1.6s steps(8, jump-none) infinite; }
 @media (prefers-reduced-motion: reduce) { .tldr-pulse { animation: none; } }

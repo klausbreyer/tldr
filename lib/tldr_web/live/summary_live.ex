@@ -20,12 +20,15 @@ defmodule TldrWeb.SummaryLive do
 
   use TldrWeb, :live_view
 
-  alias Tldr.{Job, Language, Source, Summary}
+  alias Tldr.{Job, Source, Summary}
   alias TldrWeb.Words
+
+  # Switches the words and the language of the next summaries. The ones
+  # already there stay as they are; summarizing them again would cost money.
+  on_mount TldrWeb.LanguageHook
 
   @impl true
   def mount(_params, session, socket) do
-    language = Language.known(session["language"]) || Language.default()
     params = get_connect_params(socket) || %{}
 
     {:ok,
@@ -33,7 +36,6 @@ defmodule TldrWeb.SummaryLive do
        page_title: "tldr.tf",
        items: [],
        submits: 0,
-       language: language,
        embedded: session["embedded"] == true,
        tab: params["tab"],
        kept: kept(params["kept"]),
@@ -57,13 +59,6 @@ defmodule TldrWeb.SummaryLive do
 
   def handle_params(_params, _uri, socket), do: {:noreply, socket}
 
-  # Switches the words and the language of the next summaries. The ones
-  # already there stay as they are; summarizing them again would cost money.
-  @impl true
-  def handle_event("language", %{"language" => language}, socket) do
-    {:noreply, assign(socket, language: Language.known(language) || socket.assigns.language)}
-  end
-
   @impl true
   def handle_event("summarize", %{"addresses" => paste}, socket) do
     socket = summarize(socket, paste)
@@ -79,7 +74,7 @@ defmodule TldrWeb.SummaryLive do
   def handle_event("refresh", %{"id" => id}, socket) do
     case Enum.find(socket.assigns.items, &(to_string(&1.id) == id)) do
       %{saved: _} = item ->
-        item = Map.merge(Map.delete(item, :saved), %{status: :running, started: now()})
+        item = Map.merge(Map.delete(item, :saved), %{status: :running})
         socket = run(socket, item, fresh: true)
         {:noreply, assign(socket, items: replace(socket.assigns.items, item))}
 
@@ -97,8 +92,7 @@ defmodule TldrWeb.SummaryLive do
         {:exit, _reason} -> %{status: :error, error: :crashed}
       end
 
-    item = Enum.find(socket.assigns.items, &(&1.id == id))
-    item = Map.merge(item, Map.put(outcome, :seconds, seconds_since(item)))
+    item = socket.assigns.items |> Enum.find(&(&1.id == id)) |> Map.merge(outcome)
 
     {:noreply,
      socket
@@ -122,124 +116,81 @@ defmodule TldrWeb.SummaryLive do
 
   @impl true
   def render(assigns) do
-    assigns = assign(assigns, single: length(assigns.items) <= 1)
+    assigns =
+      assign(assigns,
+        single: length(assigns.items) <= 1,
+        empty: assigns.items == [] and not assigns.embedded
+      )
 
     ~H"""
     <Layouts.app flash={@flash}>
-      <div
+      <Layouts.page
         data-layout={if @single, do: "single", else: "list"}
-        class={[
-          "mx-auto flex min-h-dvh flex-col px-5",
-          if(@single,
-            do: "max-w-[680px] pt-5 sm:pt-[15vh]",
-            else: "max-w-[860px] pt-5 sm:pt-6"
-          )
-        ]}
+        class="pt-6 sm:pt-8"
       >
-        <div class="flex-1 pb-16">
-          <a
-            :if={@embedded}
-            id="panel-home"
-            href="https://tldr.tf"
-            target="_blank"
-            rel="noopener"
-            class="mb-8 block w-fit hover:opacity-80"
-          >
-            <Layouts.wordmark class="text-5xl sm:text-6xl" />
-          </a>
-          <Layouts.wordmark :if={@single && !@embedded} class="mb-8 block text-5xl sm:text-6xl" />
+        <Layouts.header language={@language} home={if @embedded, do: :site, else: :none} />
 
-          <.form
-            :if={!@embedded}
-            for={%{}}
-            id="summarize"
-            phx-submit="summarize"
-            class={[
-              "flex items-center gap-3",
-              if(@single,
-                do: "border-b border-line py-2.5 text-lg sm:text-xl",
-                else: "border-b border-text pt-2 pb-2.5 text-[15px]"
-              )
-            ]}
+        <h1
+          :if={@empty}
+          class="mt-14 mb-8 text-[40px] leading-[1.1] font-bold tracking-tight text-balance sm:mt-[10vh] sm:text-[48px]"
+        >
+          <span
+            :for={sentence <- Words.sentences(Words.t(@language, :headline))}
+            class="block sm:inline"
           >
-            <span :if={@single} class="text-text" aria-hidden="true">→</span>
-            <Layouts.wordmark :if={!@single} class="text-[19px]" />
+            {sentence}
+          </span>
+        </h1>
+
+        <.form :if={!@embedded} for={%{}} id="summarize" phx-submit="summarize">
+          <div class="flex flex-col sm:h-12 sm:flex-row">
             <input
               type="text"
               id={"addresses-#{@submits}"}
               name="addresses"
-              aria-label="Link"
-              placeholder={Words.t(@language, if(@single, do: :placeholder, else: :placeholder_more))}
+              aria-label={Words.t(@language, :placeholder)}
+              placeholder={
+                Words.t(@language, if(@items == [], do: :placeholder, else: :placeholder_more))
+              }
               autocomplete="off"
               spellcheck="false"
               data-1p-ignore
               data-lpignore="true"
               phx-mounted={JS.focus()}
-              class="min-w-0 flex-1 bg-transparent text-text placeholder:text-text/50 outline-none"
+              class="h-12 w-full min-w-0 border border-line bg-bg sm:w-auto sm:flex-1 px-4 text-base leading-none text-text placeholder:text-text/50 outline-none focus:border-brand sm:border-r-0"
             />
             <button
               type="submit"
-              class={[
-                "shrink-0 cursor-pointer bg-brand text-white hover:bg-rose-700",
-                if(@single, do: "px-3.5 py-1.5 text-sm", else: "px-2.5 py-0.5 text-[13px]")
-              ]}
+              class="h-11 shrink-0 cursor-pointer border border-brand bg-brand px-6 sm:h-12 text-base leading-none font-medium text-white hover:bg-rose-700 -mt-px sm:mt-0 sm:-ml-px sm:w-[180px]"
             >
               {Words.t(@language, :submit)}
             </button>
-            <.languages :if={!@single} language={@language} />
-          </.form>
-
-          <div :if={@single || @embedded} class="mt-4 flex items-baseline gap-4 text-sm text-text">
-            <p class="flex-1">{if @items == [] && !@embedded, do: Words.t(@language, :hint)}</p>
-            <.languages language={@language} />
           </div>
+          <p :if={@items == []} class="mt-3 text-sm">
+            <span
+              :for={sentence <- Words.sentences(Words.t(@language, :hint))}
+              class="block sm:inline"
+            >
+              {sentence}
+            </span>
+          </p>
+        </.form>
 
-          <div id="summaries">
-            <.item
-              :for={item <- @items}
-              item={item}
-              single={@single}
-              language={@language}
-              offset={@offset}
-            />
-          </div>
+        <div id="summaries" class={if(@embedded, do: "", else: "mt-6 sm:mt-10")}>
+          <.item
+            :for={item <- @items}
+            item={item}
+            single={@single}
+            language={@language}
+            offset={@offset}
+          />
         </div>
 
-        <Layouts.footer language={@language} embedded={@embedded} />
-      </div>
+        <:footer>
+          <Layouts.footer language={@language} embedded={@embedded} />
+        </:footer>
+      </Layouts.page>
     </Layouts.app>
-    """
-  end
-
-  attr :language, :string, required: true
-
-  # The language switch: one button per language, the current one in the accent.
-  defp languages(assigns) do
-    ~H"""
-    <div
-      role="group"
-      aria-label={Words.t(@language, :language)}
-      class="-my-2 flex shrink-0 font-mono text-xs"
-    >
-      <button
-        :for={language <- Language.all()}
-        type="button"
-        aria-pressed={to_string(language == @language)}
-        phx-click={
-          JS.push("language", value: %{language: language})
-          |> JS.dispatch("tldr:language", detail: %{language: language})
-        }
-        class={[
-          "cursor-pointer px-1.5 py-2",
-          if(language == @language,
-            do: "text-brand",
-            else: "text-text hover:text-brand"
-          )
-        ]}
-      >
-        {String.upcase(language)}
-      </button>
-    </div>
     """
   end
 
@@ -252,106 +203,140 @@ defmodule TldrWeb.SummaryLive do
     ~H"""
     <article
       id={"item-#{@item.id}"}
-      class={[
-        if(@single,
-          do: "mt-9",
-          else: "grid gap-1 border-b border-line py-4 sm:grid-cols-[76px_1fr] sm:gap-4"
-        )
-      ]}
+      class={
+        if(@single, do: "", else: "border-t border-line py-6 first:border-t-0 first:pt-0 sm:py-8")
+      }
     >
-      <div :if={!@single} class="pt-0.5 text-[11px] tracking-[.06em] text-text uppercase">
-        {Words.t(@language, kind_word(@item.kind))}
-      </div>
-      <div class="min-w-0">
-        <div class={["flex items-start gap-3", if(@single, do: "mb-5", else: "mb-1.5")]}>
-          <img
-            :if={@item.video}
-            src={~p"/thumbnail/#{@item.video}"}
-            alt=""
-            class={["aspect-video shrink-0 object-cover", if(@single, do: "w-28", else: "w-24")]}
-          />
-          <div class="min-w-0">
-            <h2 class={[
-              "font-semibold break-words",
-              if(@single, do: "text-[15px]", else: "text-sm")
-            ]}>
-              {title(@item)}
-            </h2>
-            <div class={[
-              "font-mono text-xs break-all text-text",
-              if(@single, do: "mt-0.5", else: "mt-px")
-            ]}>
-              {meta(@item, @language, @offset)}
-            </div>
+      <div class="flex items-start gap-4 sm:gap-5">
+        <div class="min-w-0 flex-1">
+          <div
+            title={@item.address}
+            class={[
+              "text-sm leading-5",
+              if(@item.status == :done, do: "mb-2 truncate", else: "truncate")
+            ]}
+          >
+            {meta(@item, @language, @offset)}
+          </div>
+          <h2
+            :if={@item.status == :done}
+            class="text-lg leading-6 font-semibold break-words sm:text-xl sm:leading-[26px]"
+          >
+            {title(@item)}
+          </h2>
+          <div :if={@item.status == :running} role="status" class="mt-3">
+            <p class="flex items-start gap-1.5 text-base leading-normal">
+              <span
+                class="flex h-6 w-3.5 shrink-0 items-center justify-center"
+                aria-hidden="true"
+              >
+                <span class="tldr-pulse size-2 translate-y-[0.5px] rounded-full bg-brand"></span>
+              </span>
+              {Words.t(@language, waiting_word(@item.kind))}
+            </p>
+            <p :if={@item.kind == :youtube} class="mt-1 pl-5 text-[13px]">
+              {Words.t(@language, :waiting_video_hint)}
+            </p>
+          </div>
+
+          <p
+            :if={@item.status == :error}
+            class="mt-3 flex items-start gap-1.5 text-base leading-normal"
+          >
+            <span
+              class="flex h-6 w-3.5 shrink-0 items-center justify-center"
+              aria-hidden="true"
+            >
+              <.icon
+                name="hero-exclamation-circle-mini"
+                class="size-3.5! translate-y-[0.5px] text-brand"
+              />
+            </span>
+            {message(@item.error, @language)}
+          </p>
+          <div :if={@item.status == :error && @item.url} class="mt-3">
+            <.open_link href={@item.url} class="text-[15px] font-medium" language={@language} />
           </div>
         </div>
+        <img
+          :if={@item.video}
+          src={~p"/thumbnail/#{@item.video}"}
+          alt=""
+          class="aspect-video w-[85px] shrink-0 bg-line object-cover sm:w-[89px]"
+        />
+      </div>
 
-        <div :if={@item.status == :running} role="status">
-          <p class={[
-            "flex items-center gap-3 text-text",
-            if(@single, do: "text-xl sm:text-[22px]", else: "text-base")
-          ]}>
-            <span class="tldr-pulse size-2.5 shrink-0 rounded-full bg-brand" aria-hidden="true"></span>
-            {Words.t(@language, waiting_word(@item.kind))}
-          </p>
-          <p :if={@item.kind == :youtube} class="mt-1 pl-[22px] text-sm text-text">
-            {Words.t(@language, :waiting_video_hint)}
-          </p>
-        </div>
-
-        <p :if={@item.status == :error} class="text-[#ff6b5f]">
-          {message(@item.error, @language)}
+      <div :if={@item.status == :done} class="mt-4">
+        <p class={[
+          "mb-5 max-w-[34rem] text-pretty sm:mb-6",
+          if(@single,
+            do: "text-xl leading-[1.35] sm:text-2xl",
+            else: "text-xl leading-[1.35] sm:text-[22px]"
+          )
+        ]}>
+          {keep_compounds(@item.summary.tldr)}
         </p>
-
-        <div :if={@item.status == :done}>
-          <p class={[
-            if(@single,
-              do: "mb-5 text-xl leading-snug font-medium sm:text-[22px]",
-              else: "mb-1.5 text-base"
-            )
-          ]}>
-            {@item.summary.tldr}
-          </p>
-          <ul :if={@item.summary.points != []} class={if(@single, do: "space-y-2", else: "space-y-1")}>
-            <li
-              :for={point <- @item.summary.points}
-              class={[
-                "relative pl-4 before:absolute before:left-0 before:text-text before:content-['–']",
-                if(@single, do: "text-text", else: "text-sm text-text")
-              ]}
-            >
-              {point}
-            </li>
-          </ul>
-          <div class={[
-            "flex gap-5 text-text",
-            if(@single, do: "mt-7 text-[15px]", else: "mt-2 text-xs")
-          ]}>
-            <button
-              type="button"
-              class="cursor-pointer hover:text-brand"
-              data-copy={copy_text(@item.summary)}
-              data-copied={Words.t(@language, :copied)}
-              phx-click={JS.dispatch("tldr:copy")}
+        <ul
+          :if={@item.summary.points != []}
+          class="max-w-[34rem] space-y-2.5 text-base leading-normal text-pretty sm:space-y-3"
+        >
+          <li
+            :for={point <- @item.summary.points}
+            class="relative pl-5 before:absolute before:left-0 before:w-3.5 before:text-center before:content-['–']"
+          >
+            {keep_compounds(point)}
+          </li>
+        </ul>
+        <div class="mt-5 flex gap-6 text-[15px] font-medium sm:mt-6 sm:gap-5">
+          <button
+            type="button"
+            class="group -my-3 inline-flex cursor-pointer items-center gap-1.5 py-3"
+            data-copy={copy_text(@item.summary)}
+            data-copied={Words.t(@language, :copied)}
+            phx-click={JS.dispatch("tldr:copy")}
+          >
+            <span
+              data-copy-label
+              class="underline decoration-line-strong underline-offset-4 group-hover:decoration-text"
             >
               {Words.t(@language, :copy)}
-            </button>
-            <a href={@item.summary.url} target="_blank" rel="noopener" class="hover:text-brand">
-              {Words.t(@language, :open)} ↗
-            </a>
-            <button
-              :if={@item[:saved]}
-              type="button"
-              class="cursor-pointer hover:text-brand"
-              phx-click="refresh"
-              phx-value-id={@item.id}
-            >
-              {Words.t(@language, :refresh)}
-            </button>
-          </div>
+            </span>
+            <.icon name="hero-square-2-stack" class="size-4" />
+          </button>
+          <.open_link href={@item.summary.url} language={@language} />
+          <button
+            :if={@item[:saved]}
+            type="button"
+            class="-my-3 cursor-pointer py-3 underline decoration-line-strong underline-offset-4 hover:decoration-text"
+            phx-click="refresh"
+            phx-value-id={@item.id}
+          >
+            {Words.t(@language, :refresh)}
+          </button>
         </div>
       </div>
     </article>
+    """
+  end
+
+  attr :href, :string, required: true
+  attr :language, :string, required: true
+  attr :class, :string, default: nil
+
+  # "Open link" with its arrow outside the underline, like the glyph of Copy.
+  defp open_link(assigns) do
+    ~H"""
+    <a
+      href={@href}
+      target="_blank"
+      rel="noopener"
+      class={["group -my-3 inline-flex items-center gap-1.5 py-3", @class]}
+    >
+      <span class="underline decoration-line-strong underline-offset-4 group-hover:decoration-text">
+        {Words.t(@language, :open)}
+      </span>
+      <.icon name="hero-arrow-up-right" class="size-3.5" />
+    </a>
     """
   end
 
@@ -444,7 +429,8 @@ defmodule TldrWeb.SummaryLive do
 
   # `url` is the full form of the address without its fragment, which would
   # hide the rest of the address bar from the server. It is nil when the
-  # address is not valid. The browser keeps summaries under it.
+  # address is not valid. The browser keeps summaries under it, and a failed
+  # item's "Open link" leads there.
   defp new_item(address) do
     {kind, url} =
       case Source.parse(address) do
@@ -458,46 +444,54 @@ defmodule TldrWeb.SummaryLive do
       url: url,
       kind: kind,
       video: Source.video_id(address),
-      status: :running,
-      started: now()
+      status: :running
     }
   end
 
-  defp now, do: System.monotonic_time(:millisecond)
+  defp title(%{summary: %{title: title}}) when is_binary(title), do: title
+  defp title(%{summary: summary}), do: host(summary.url)
 
-  defp seconds_since(item), do: Float.round((now() - item.started) / 1000, 1)
-
-  defp title(%{status: :done, summary: %{title: title}}) when is_binary(title), do: title
-  defp title(item), do: item.address
-
-  # A kept summary says when it was saved, a new one how long it took.
-  defp meta(%{status: :done, summary: summary} = item, language, offset) do
-    host = URI.parse(summary.url).host |> String.replace_prefix("www.", "")
-
-    time =
-      case item do
-        %{saved: saved} -> Words.t(language, :saved, date: format_saved(saved, language, offset))
-        _new -> "#{format_seconds(item.seconds)} s"
-      end
-
-    Enum.join(Enum.reject([host, summary.channel, time], &is_nil/1), " · ")
+  # The line above the title: where it comes from, place first. A page names
+  # its host, a video YouTube and its channel; a kept summary adds when it
+  # was saved. Before the summary arrives, and when it fails, the line holds
+  # the bare address and there is no title.
+  defp meta(%{status: :done} = item, language, offset) do
+    Enum.join(Enum.reject([source(item), saved(item, language, offset)], &is_nil/1), " · ")
   end
 
-  defp meta(%{status: :error} = item, _language, _offset), do: "#{format_seconds(item.seconds)} s"
-  defp meta(%{status: :running}, _language, _offset), do: nil
+  defp meta(%{video: id}, _language, _offset) when is_binary(id), do: "youtu.be/" <> id
+  defp meta(item, _language, _offset), do: bare(item.address)
+
+  defp source(%{kind: :youtube, summary: %{channel: channel}}) when is_binary(channel),
+    do: "YouTube · " <> channel
+
+  defp source(%{kind: :youtube}), do: "YouTube"
+  defp source(%{summary: summary}), do: host(summary.url)
 
   # `saved` is in milliseconds since 1970, `offset` the reader's time zone.
-  defp format_saved(saved, language, offset) do
+  defp saved(%{saved: saved}, language, offset) do
     date = saved |> DateTime.from_unix!(:millisecond) |> DateTime.add(offset, :minute)
     format = if language == "de", do: "%-d.%-m.%Y, %H:%M", else: "%b %-d, %Y, %H:%M"
-    Calendar.strftime(date, format)
+    Words.t(language, :saved, date: Calendar.strftime(date, format))
   end
 
-  defp format_seconds(seconds),
-    do: seconds |> :erlang.float_to_binary(decimals: 1) |> String.replace(".", ",")
+  defp saved(_item, _language, _offset), do: nil
 
-  defp kind_word(:youtube), do: :video
-  defp kind_word(:web), do: :page
+  # An address as a person reads it: no scheme, no "www.".
+  defp bare(address), do: String.replace(address, ~r{\A\s*(https?://)?(www\.)?}i, "")
+
+  # A hyphen inside a word ("co-founder") does not break the lead line.
+  defp keep_compounds(text), do: String.replace(text, ~r/(?<=\w)-(?=\w)/u, "\u2011")
+
+  defp host(address) do
+    case URI.parse(address) do
+      %URI{host: host} when is_binary(host) and host != "" ->
+        String.replace_prefix(host, "www.", "")
+
+      _ ->
+        nil
+    end
+  end
 
   defp waiting_word(:youtube), do: :waiting_video
   defp waiting_word(:web), do: :waiting_page

@@ -20,6 +20,15 @@ defmodule TldrWeb.PrivacyLiveTest do
     assert html =~ "Magic Containers by bunny.net in Frankfurt"
   end
 
+  test "the language switch works on the privacy and shortcut pages", %{conn: conn} do
+    for path <- [~p"/privacy", ~p"/shortcut"] do
+      {:ok, view, _html} =
+        conn |> put_req_header("accept-language", "en") |> live(path)
+
+      assert view |> element("button", "DE") |> render_click() =~ "Datenschutz"
+    end
+  end
+
   test "the footer links the privacy page and the code", %{
     conn: conn
   } do

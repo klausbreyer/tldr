@@ -27,14 +27,16 @@ defmodule Tldr.YouTube do
   end
 
   @doc """
-  The JPEG preview image of a video, 320 by 180 pixels. `id` must be a valid
-  video id (`Tldr.Source.video_id/1`).
+  The JPEG preview image of a video, 480 by 360 pixels. Its 16:9 middle is
+  the picture of any video, 16:9 or 4:3, without black bars, so the
+  interface crops it to that. `id` must be a valid video id
+  (`Tldr.Source.video_id/1`).
   """
   @spec thumbnail(String.t()) :: {:ok, binary()} | :error
   def thumbnail(id) do
     options =
       [
-        url: "https://i.ytimg.com/vi/#{id}/mqdefault.jpg",
+        url: "https://i.ytimg.com/vi/#{id}/hqdefault.jpg",
         decode_body: false,
         receive_timeout: 5_000,
         retry: false
