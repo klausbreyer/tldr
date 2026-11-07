@@ -1,7 +1,7 @@
 # ADR-001: One Phoenix app, no database
 
 ## Status
-Accepted
+Accepted. "Nothing is kept" is narrowed by ADR-012.
 
 ## Date
 2026-10-29

@@ -11,8 +11,9 @@ defmodule Tldr.Application do
       TldrWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:tldr, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Tldr.PubSub},
-      # Start a worker by calling: Tldr.Worker.start_link(arg)
-      # {Tldr.Worker, arg},
+      # Summaries that outlive their page (`Tldr.Job`).
+      {Registry, keys: :unique, name: Tldr.Job.Registry},
+      {DynamicSupervisor, name: Tldr.Job.Supervisor},
       # Start to serve requests, typically the last entry
       TldrWeb.Endpoint
     ]

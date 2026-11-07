@@ -23,8 +23,10 @@ When there is nothing to summarize, it says so and invents nothing.
 ### 3. Nothing is stored
 
 No database, no accounts, no history. A request comes in, a summary goes
-out, and nothing outlives it. A feature that needs to remember something
-needs a decision first (`docs/decisions/001`).
+out. The server holds a finished summary for ten minutes, for the tab that
+asked, so a reader who leaves the page still gets it. The reader's own
+browser keeps their summaries (`docs/decisions/012`). A feature that needs
+to remember anything more needs a decision first (`docs/decisions/001`).
 
 ## A note from Klaus
 
@@ -176,7 +178,9 @@ browser's `Accept-Language`, else English (`put_language` in the router,
 
 The interface is one LiveView, `TldrWeb.SummaryLive` at `/`. One summary gets
 the single layout, two or more turn the page into a list, newest first. Each
-address runs in its own `start_async` task. The list lives in the LiveView
+address runs in its own `Tldr.Job`, which goes on when the page is gone; the
+page waits for it in a `start_async` task. The browser keeps finished
+summaries and sends them back on connect. The list lives in the LiveView
 process. Its addresses go into the address bar (`/<address><address>`),
 and opening that address summarizes them again (`docs/decisions/011`). So
 `tldr.tf/` in front of a link, or of several in a row, summarizes them. Next
@@ -187,10 +191,11 @@ share them.
 ## Where code lives
 
 - `lib/tldr/` holds the core: `source`, `page`, `you_tube`, `open_router`,
-  `summarizer`, `summary`, `config`.
+  `summarizer`, `job`, `summary`, `config`.
 - `lib/tldr_web/live/summary_live.ex` is the interface,
   `lib/tldr_web/live/privacy_live.ex` the privacy page. `assets/js/app.js`
-  holds the one bit of browser code, the copy button.
+  holds the browser code: the copy button, the language cookie and the kept
+  summaries.
 - `assets/css/app.css` holds the colors of v01.io as Tailwind theme colors
   (`brand`, `bg`, `text`, `line`; never `primary`, daisyUI owns that name).
   Like v01.io, text is `text` or `brand` and nothing in between: no dimmed
