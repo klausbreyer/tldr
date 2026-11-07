@@ -439,20 +439,16 @@ defmodule TldrWeb.SummaryLive do
 
   # The page's addresses in the order shown, back to back after the host.
   # `Tldr.Source.addresses/1` splits them again at each `https://`, so each
-  # one goes in its full form. A fragment would hide the rest of the address
-  # from the server; an address that is not valid is left out.
-  defp share_path(items) do
-    "/" <>
-      Enum.map_join(items, fn item ->
-        if item.url, do: item.url |> String.split("#") |> hd(), else: ""
-      end)
-  end
+  # one goes in its full form. An address that is not valid is left out.
+  defp share_path(items), do: "/" <> Enum.map_join(items, &(&1.url || ""))
 
-  # `url` is the full form of the address, nil when it is not valid.
+  # `url` is the full form of the address without its fragment, which would
+  # hide the rest of the address bar from the server. It is nil when the
+  # address is not valid. The browser keeps summaries under it.
   defp new_item(address) do
     {kind, url} =
       case Source.parse(address) do
-        {:ok, {kind, url}} -> {kind, url}
+        {:ok, {kind, url}} -> {kind, url |> String.split("#") |> hd()}
         {:error, _} -> {:web, nil}
       end
 

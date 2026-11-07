@@ -238,9 +238,10 @@ defmodule TldrWeb.SummaryLiveTest do
 
   test "a new summary goes to the browser to keep", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
-    view |> form("#summarize", %{addresses: "example.com/one"}) |> render_submit()
+    view |> form("#summarize", %{addresses: "example.com/one#part"}) |> render_submit()
     render_async(view)
 
+    # Under the address as the address bar shows it, without the fragment.
     assert_push_event(view, "tldr:keep", %{
       url: "https://example.com/one",
       language: "en",
