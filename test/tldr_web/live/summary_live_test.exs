@@ -305,9 +305,13 @@ defmodule TldrWeb.SummaryLiveTest do
     end)
 
     conn = put_connect_params(conn, %{"tab" => "tab-#{System.unique_integer()}"})
+
     {:ok, gone, _html} = live(conn, "/https://example.com/one")
-    assert_receive {:model, model}
-    Process.unlink(gone.pid)
+    assert_receive {:model, model}, 1000
+
+    # The test is linked to the view's client proxy, which dies with the
+    # view. Trapping exits keeps the test alive when the page goes away.
+    Process.flag(:trap_exit, true)
     Process.exit(gone.pid, :kill)
 
     {:ok, back, _html} = live(conn, "/https://example.com/one")
