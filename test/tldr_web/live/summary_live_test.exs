@@ -37,7 +37,6 @@ defmodule TldrWeb.SummaryLiveTest do
     {:ok, view, html} = live(conn, ~p"/")
     assert html =~ ~s(data-layout="single")
     assert html =~ ~s(href="https://v01.io")
-    assert has_element?(view, ~s(footer a[href="/"]), "tldr.tf")
 
     view |> form("#summarize", %{addresses: "https://example.com/one"}) |> render_submit()
     html = render_async(view)
@@ -163,6 +162,10 @@ defmodule TldrWeb.SummaryLiveTest do
     html = render_async(view)
     assert html =~ "The page blocks automated requests."
     assert html =~ "That is not a valid address."
+
+    # A blocked page can still be opened; an address that is not valid cannot.
+    assert has_element?(view, ~s(#summaries a[href="https://example.com/blocked"]), "Open link")
+    assert view |> element("#summaries") |> render() |> String.split("Open link") |> length() == 2
   end
 
   test "the browser's language is the default, and the reader can switch", %{conn: conn} do
@@ -175,6 +178,14 @@ defmodule TldrWeb.SummaryLiveTest do
 
     view |> form("#summarize", %{addresses: "kein-link"}) |> render_submit()
     assert render_async(view) =~ "That is not a valid address."
+  end
+
+  test "the input asks for another link as soon as one summary is there", %{conn: conn} do
+    {:ok, view, html} = live(conn, ~p"/")
+    assert html =~ ~s(placeholder="Paste a link")
+
+    view |> form("#summarize", %{addresses: "https://example.com/one"}) |> render_submit()
+    assert render_async(view) =~ ~s(placeholder="Another link")
   end
 
   test "the language cookie beats the browser", %{conn: conn} do

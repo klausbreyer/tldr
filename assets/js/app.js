@@ -89,15 +89,17 @@ window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 
 // The copy button of a summary: the text sits in its data-copy, the word
-// it shows for a moment in data-copied. The label is taken only when no
+// it shows for a moment in data-copied, and the word itself in its
+// [data-copy-label], beside the icon. The label is taken only when no
 // timer runs, so a second click inside 1.5 s restores it too.
 window.addEventListener("tldr:copy", ({target}) => {
+  const label = target.querySelector("[data-copy-label]") || target
   navigator.clipboard.writeText(target.dataset.copy).then(() => {
-    if (!target.copyTimer) target.dataset.label = target.textContent
-    target.textContent = target.dataset.copied
+    if (!target.copyTimer) target.dataset.label = label.textContent
+    label.textContent = target.dataset.copied
     clearTimeout(target.copyTimer)
     target.copyTimer = setTimeout(() => {
-      target.textContent = target.dataset.label
+      label.textContent = target.dataset.label
       target.copyTimer = null
     }, 1500)
   })
