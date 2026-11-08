@@ -143,7 +143,7 @@ defmodule TldrWeb.SummaryLive do
         </h1>
 
         <.form :if={!@embedded} for={%{}} id="summarize" phx-submit="summarize">
-          <div class="relative flex sm:h-12">
+          <div class="relative flex">
             <input
               type="text"
               id={"addresses-#{@submits}"}
@@ -157,15 +157,15 @@ defmodule TldrWeb.SummaryLive do
               data-1p-ignore
               data-lpignore="true"
               phx-mounted={JS.focus()}
-              class="h-12 w-full min-w-0 flex-1 border border-line bg-bg pr-14 pl-4 text-base leading-none text-text placeholder:text-text/50 outline-none focus:border-brand sm:border-r-0 sm:pr-4"
+              class="h-12 w-full min-w-0 flex-1 border border-line bg-bg pr-14 pl-4 text-base leading-none text-text placeholder:text-text/50 outline-none focus:border-brand"
             />
-            <%!-- On a phone the button is an arrow inside the field, from sm up the labelled button next to it. --%>
+            <%!-- The button is an arrow inside the field; its label is for screen readers. --%>
             <button
               type="submit"
-              class="absolute top-1.5 right-1.5 grid size-9 shrink-0 before:absolute before:-inset-1.5 sm:before:hidden cursor-pointer place-items-center bg-brand text-white hover:bg-rose-700 sm:static sm:-ml-px sm:h-12 sm:w-[180px] sm:border sm:border-brand sm:text-base sm:leading-none sm:font-medium"
+              class="absolute top-1.5 right-1.5 grid size-9 cursor-pointer place-items-center bg-brand text-white before:absolute before:-inset-1.5 hover:bg-rose-700"
             >
-              <.icon name="hero-arrow-right-mini" class="size-5 sm:hidden" />
-              <span class="sr-only sm:not-sr-only">{Words.t(@language, :submit)}</span>
+              <.icon name="hero-arrow-right-mini" class="size-5" />
+              <span class="sr-only">{Words.t(@language, :submit)}</span>
             </button>
           </div>
           <p :if={@items == []} class="mt-3 text-sm">
