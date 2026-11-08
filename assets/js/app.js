@@ -133,9 +133,11 @@ const checkConnection = () => {
   checking = true
   const timer = setTimeout(() => {
     checking = false
-    // Phoenix connects anew right away and lets the dead socket finish closing.
-    liveSocket.disconnect()
-    liveSocket.connect()
+    // Phoenix connects anew right away and lets the dead socket finish
+    // closing. The Phoenix socket, not liveSocket.disconnect(), which would
+    // drop LiveView's reload on a deliberate server close for good.
+    socket.disconnect()
+    socket.connect()
   }, pingTimeoutMs)
   socket.ping(() => {
     clearTimeout(timer)
