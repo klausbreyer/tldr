@@ -279,7 +279,7 @@ defmodule TldrWeb.SummaryLiveTest do
     {:ok, view, _html} = live(conn, "/https://example.com/onehttps://example.com/two")
 
     assert has_element?(view, "#summaries", "The kept summary.")
-    assert has_element?(view, "#summaries", "saved Nov 7, 2026, 14:32")
+    assert has_element?(view, "#summaries", "14:32")
     html = render_async(view)
     assert html =~ "Summary of Page /two."
     refute html =~ "Summary of Page /one."
@@ -289,6 +289,18 @@ defmodule TldrWeb.SummaryLiveTest do
     assert html =~ "Summary of Page /one."
     refute html =~ "The kept summary."
     refute has_element?(view, "#summaries button", "Refresh")
+  end
+
+  test "the saved date says today, drops the current year and keeps older years" do
+    today = ~D[2026-11-08]
+    stamp = &TldrWeb.SummaryLive.stamp(&1, today, &2)
+
+    assert stamp.(~N[2026-11-08 09:05:00], "en") == "today, 09:05"
+    assert stamp.(~N[2026-11-08 09:05:00], "de") == "heute, 09:05"
+    assert stamp.(~N[2026-11-07 14:32:00], "en") == "Nov 7, 14:32"
+    assert stamp.(~N[2026-11-07 14:32:00], "de") == "7.11., 14:32"
+    assert stamp.(~N[2025-12-31 23:59:00], "en") == "Dec 31, 2025, 23:59"
+    assert stamp.(~N[2025-12-31 23:59:00], "de") == "31.12.2025, 23:59"
   end
 
   test "a tab that comes back gets the summary that kept running", %{conn: conn} do

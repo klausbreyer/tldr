@@ -143,7 +143,7 @@ defmodule TldrWeb.SummaryLive do
         </h1>
 
         <.form :if={!@embedded} for={%{}} id="summarize" phx-submit="summarize">
-          <div class="flex flex-col sm:h-12 sm:flex-row">
+          <div class="relative flex sm:h-12">
             <input
               type="text"
               id={"addresses-#{@submits}"}
@@ -157,13 +157,15 @@ defmodule TldrWeb.SummaryLive do
               data-1p-ignore
               data-lpignore="true"
               phx-mounted={JS.focus()}
-              class="h-12 w-full min-w-0 border border-line bg-bg sm:w-auto sm:flex-1 px-4 text-base leading-none text-text placeholder:text-text/50 outline-none focus:border-brand sm:border-r-0"
+              class="h-12 w-full min-w-0 flex-1 border border-line bg-bg pr-14 pl-4 text-base leading-none text-text placeholder:text-text/50 outline-none focus:border-brand sm:border-r-0 sm:pr-4"
             />
+            <%!-- On a phone the button is an arrow inside the field, from sm up the labelled button next to it. --%>
             <button
               type="submit"
-              class="h-11 shrink-0 cursor-pointer border border-brand bg-brand px-6 sm:h-12 text-base leading-none font-medium text-white hover:bg-rose-700 -mt-px sm:mt-0 sm:-ml-px sm:w-[180px]"
+              class="absolute top-1.5 right-1.5 grid size-9 shrink-0 before:absolute before:-inset-1.5 sm:before:hidden cursor-pointer place-items-center bg-brand text-white hover:bg-rose-700 sm:static sm:-ml-px sm:h-12 sm:w-[180px] sm:border sm:border-brand sm:text-base sm:leading-none sm:font-medium"
             >
-              {Words.t(@language, :submit)}
+              <.icon name="hero-arrow-right-mini" class="size-5 sm:hidden" />
+              <span class="sr-only sm:not-sr-only">{Words.t(@language, :submit)}</span>
             </button>
           </div>
           <p :if={@items == []} class="mt-3 text-sm">
@@ -212,11 +214,14 @@ defmodule TldrWeb.SummaryLive do
           <div
             title={@item.address}
             class={[
-              "text-sm leading-5",
-              if(@item.status == :done, do: "mb-2 truncate", else: "truncate")
+              "truncate text-sm leading-5",
+              (@item.status == :done and !@item[:saved]) && "mb-2"
             ]}
           >
-            {meta(@item, @language, @offset)}
+            {meta(@item)}
+          </div>
+          <div :if={@item.status == :done and @item[:saved]} class="mt-1 mb-3 text-[13px] leading-5">
+            {saved(@item, @language, @offset)}
           </div>
           <h2
             :if={@item.status == :done}
@@ -224,39 +229,6 @@ defmodule TldrWeb.SummaryLive do
           >
             {title(@item)}
           </h2>
-          <div :if={@item.status == :running} role="status" class="mt-3">
-            <p class="flex items-start gap-1.5 text-base leading-normal">
-              <span
-                class="flex h-6 w-3.5 shrink-0 items-center justify-center"
-                aria-hidden="true"
-              >
-                <span class="tldr-pulse size-2 translate-y-[0.5px] rounded-full bg-brand"></span>
-              </span>
-              {Words.t(@language, waiting_word(@item.kind))}
-            </p>
-            <p :if={@item.kind == :youtube} class="mt-1 pl-5 text-[13px]">
-              {Words.t(@language, :waiting_video_hint)}
-            </p>
-          </div>
-
-          <p
-            :if={@item.status == :error}
-            class="mt-3 flex items-start gap-1.5 text-base leading-normal"
-          >
-            <span
-              class="flex h-6 w-3.5 shrink-0 items-center justify-center"
-              aria-hidden="true"
-            >
-              <.icon
-                name="hero-exclamation-circle-mini"
-                class="size-3.5! translate-y-[0.5px] text-brand"
-              />
-            </span>
-            {message(@item.error, @language)}
-          </p>
-          <div :if={@item.status == :error && @item.url} class="mt-3">
-            <.open_link href={@item.url} class="text-[15px] font-medium" language={@language} />
-          </div>
         </div>
         <img
           :if={@item.video}
@@ -264,6 +236,40 @@ defmodule TldrWeb.SummaryLive do
           alt=""
           class="aspect-video w-[85px] shrink-0 bg-line object-cover sm:w-[89px]"
         />
+      </div>
+
+      <%!-- Waiting and failure lines run under the whole head, preview included. --%>
+      <div :if={@item.status == :running} role="status" class="mt-3">
+        <p class="flex items-start gap-1.5 text-base leading-normal">
+          <span
+            class="flex h-6 w-3.5 shrink-0 items-center justify-center"
+            aria-hidden="true"
+          >
+            <span class="tldr-pulse size-2 translate-y-[0.5px] rounded-full bg-brand"></span>
+          </span>
+          {Words.t(@language, waiting_word(@item.kind))}
+        </p>
+        <p :if={@item.kind == :youtube} class="mt-1 pl-5 text-[13px]">
+          {Words.t(@language, :waiting_video_hint)}
+        </p>
+      </div>
+      <p
+        :if={@item.status == :error}
+        class="mt-3 flex items-start gap-1.5 text-base leading-normal"
+      >
+        <span
+          class="flex h-6 w-3.5 shrink-0 items-center justify-center"
+          aria-hidden="true"
+        >
+          <.icon
+            name="hero-exclamation-circle-mini"
+            class="size-3.5! translate-y-[0.5px] text-brand"
+          />
+        </span>
+        {message(@item.error, @language)}
+      </p>
+      <div :if={@item.status == :error && @item.url} class="mt-3">
+        <.open_link href={@item.url} class="text-[15px] font-medium" language={@language} />
       </div>
 
       <div :if={@item.status == :done} class="mt-4">
@@ -287,7 +293,7 @@ defmodule TldrWeb.SummaryLive do
             {keep_compounds(point)}
           </li>
         </ul>
-        <div class="mt-5 flex gap-6 text-[15px] font-medium sm:mt-6 sm:gap-5">
+        <div class="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-[15px] font-medium whitespace-nowrap sm:mt-6 sm:gap-x-5">
           <button
             type="button"
             class="group -my-3 inline-flex cursor-pointer items-center gap-1.5 py-3"
@@ -307,11 +313,14 @@ defmodule TldrWeb.SummaryLive do
           <button
             :if={@item[:saved]}
             type="button"
-            class="-my-3 cursor-pointer py-3 underline decoration-line-strong underline-offset-4 hover:decoration-text"
+            class="group -my-3 inline-flex cursor-pointer items-center gap-1.5 py-3"
             phx-click="refresh"
             phx-value-id={@item.id}
           >
-            {Words.t(@language, :refresh)}
+            <span class="underline decoration-line-strong underline-offset-4 group-hover:decoration-text">
+              {Words.t(@language, :refresh)}
+            </span>
+            <.icon name="hero-arrow-path" class="size-4" />
           </button>
         </div>
       </div>
@@ -452,15 +461,11 @@ defmodule TldrWeb.SummaryLive do
   defp title(%{summary: summary}), do: host(summary.url)
 
   # The line above the title: where it comes from, place first. A page names
-  # its host, a video YouTube and its channel; a kept summary adds when it
-  # was saved. Before the summary arrives, and when it fails, the line holds
-  # the bare address and there is no title.
-  defp meta(%{status: :done} = item, language, offset) do
-    Enum.join(Enum.reject([source(item), saved(item, language, offset)], &is_nil/1), " · ")
-  end
-
-  defp meta(%{video: id}, _language, _offset) when is_binary(id), do: "youtu.be/" <> id
-  defp meta(item, _language, _offset), do: bare(item.address)
+  # its host, a video YouTube and its channel. Before the summary arrives, and
+  # when it fails, the line holds the bare address and there is no title.
+  defp meta(%{status: :done} = item), do: source(item)
+  defp meta(%{video: id}) when is_binary(id), do: "youtu.be/" <> id
+  defp meta(item), do: bare(item.address)
 
   defp source(%{kind: :youtube, summary: %{channel: channel}}) when is_binary(channel),
     do: "YouTube · " <> channel
@@ -468,14 +473,32 @@ defmodule TldrWeb.SummaryLive do
   defp source(%{kind: :youtube}), do: "YouTube"
   defp source(%{summary: summary}), do: host(summary.url)
 
-  # `saved` is in milliseconds since 1970, `offset` the reader's time zone.
+  # A kept summary says when it was saved, on its own line under the source,
+  # so a long source never cuts it off. `saved` is in milliseconds since 1970,
+  # `offset` the reader's time zone.
   defp saved(%{saved: saved}, language, offset) do
-    date = saved |> DateTime.from_unix!(:millisecond) |> DateTime.add(offset, :minute)
-    format = if language == "de", do: "%-d.%-m.%Y, %H:%M", else: "%b %-d, %Y, %H:%M"
-    Words.t(language, :saved, date: Calendar.strftime(date, format))
+    shift = &(&1 |> DateTime.add(offset, :minute) |> DateTime.to_naive())
+    date = saved |> DateTime.from_unix!(:millisecond) |> shift.()
+    today = DateTime.utc_now() |> shift.() |> NaiveDateTime.to_date()
+    Words.t(language, :saved, date: stamp(date, today, language))
   end
 
-  defp saved(_item, _language, _offset), do: nil
+  @doc false
+  # The saved date as short as it can be: today, this year, or in full.
+  def stamp(date, today, language) do
+    day = NaiveDateTime.to_date(date)
+
+    format =
+      cond do
+        day == today -> Words.t(language, :today) <> ", %H:%M"
+        day.year == today.year and language == "de" -> "%-d.%-m., %H:%M"
+        day.year == today.year -> "%b %-d, %H:%M"
+        language == "de" -> "%-d.%-m.%Y, %H:%M"
+        true -> "%b %-d, %Y, %H:%M"
+      end
+
+    Calendar.strftime(date, format)
+  end
 
   # An address as a person reads it: no scheme, no "www.".
   defp bare(address), do: String.replace(address, ~r{\A\s*(https?://)?(www\.)?}i, "")
