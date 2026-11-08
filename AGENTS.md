@@ -198,8 +198,8 @@ share them.
   mounts `TldrWeb.LanguageHook`, which sets the language and handles the
   switch. `TldrWeb.Layouts` holds the shared column, header and footer.
   `assets/js/app.js`
-  holds the browser code: the copy button, the language cookie and the kept
-  summaries.
+  holds the browser code: the copy button, the language cookie, the kept
+  summaries and the connection check when the reader comes back.
 - `assets/css/app.css` holds the colors of v01.io as Tailwind theme colors
   (`brand`, `bg`, `text`, `line`; never `primary`, daisyUI owns that name).
   Like v01.io, text is `text` or `brand` and nothing in between: no dimmed

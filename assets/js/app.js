@@ -117,6 +117,38 @@ window.addEventListener("tldr:language", ({detail}) => {
 // connect if there are any LiveViews on the page
 liveSocket.connect()
 
+// Safari on a phone freezes the page in the background, and its connection
+// can die there without a word. Back on the page, the socket still looks
+// open, so Phoenix notices only at its next heartbeat, up to a minute later,
+// and a summary that finished meanwhile never shows. So on return we ping,
+// and without an answer in time we connect again. The new page process gets
+// the summary from its job (docs/decisions/012).
+const pingTimeoutMs = 1500
+let checking = false
+
+const checkConnection = () => {
+  const socket = liveSocket.getSocket()
+  // A socket that knows it is closed reconnects by itself.
+  if (document.visibilityState !== "visible" || checking || !socket.isConnected()) return
+  checking = true
+  const timer = setTimeout(() => {
+    checking = false
+    // Phoenix connects anew right away and lets the dead socket finish
+    // closing. The Phoenix socket, not liveSocket.disconnect(), which would
+    // drop LiveView's reload on a deliberate server close for good.
+    socket.disconnect()
+    socket.connect()
+  }, pingTimeoutMs)
+  socket.ping(() => {
+    clearTimeout(timer)
+    checking = false
+  })
+}
+
+document.addEventListener("visibilitychange", checkConnection)
+window.addEventListener("pageshow", checkConnection)
+window.addEventListener("online", checkConnection)
+
 // expose liveSocket on window for web console debug logs and latency simulation:
 // >> liveSocket.enableDebug()
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
