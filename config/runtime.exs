@@ -72,6 +72,14 @@ if config_env() == :prod do
          System.get_env("OPENROUTER_API_KEY") ||
            raise("environment variable OPENROUTER_API_KEY is missing.")
 
+  # The cache (`Tldr.Cache`). `?ssl=true` at the end turns on TLS with
+  # certificate checks.
+  config :tldr, Tldr.Repo,
+    url:
+      System.get_env("DATABASE_URL") ||
+        raise("environment variable DATABASE_URL is missing."),
+    pool_size: 5
+
   host = System.get_env("PHX_HOST") || "example.com"
 
   config :tldr, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")

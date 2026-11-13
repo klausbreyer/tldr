@@ -1,5 +1,14 @@
 import Config
 
+# The local cache (`Tldr.Cache`). Dev never reads DATABASE_URL, so a
+# production address in .env cannot reach the production database.
+config :tldr, Tldr.Repo,
+  username: "postgres",
+  password: "postgres",
+  hostname: "localhost",
+  database: "tldr_dev",
+  pool_size: 5
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #

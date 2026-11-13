@@ -1,7 +1,7 @@
 defmodule Tldr.JobTest do
-  use ExUnit.Case, async: true
+  use Tldr.DataCase, async: true
 
-  alias Tldr.Job
+  alias Tldr.{Cache, Job}
 
   setup do
     test = self()
@@ -20,38 +20,63 @@ defmodule Tldr.JobTest do
         {:answer, tldr} ->
           answer = Jason.encode!(%{"tldr" => tldr, "points" => []})
           Req.Test.json(conn, %{"choices" => [%{"message" => %{"content" => answer}}]})
+
+        :fail ->
+          Plug.Conn.send_resp(conn, 400, "")
       end
     end)
 
-    %{key: make_ref()}
+    # Jobs are shared by address, so each test has its own.
+    %{url: "https://example.com/#{System.unique_integer([:positive])}"}
   end
 
   # The first summary in a fresh VM loads Req and Floki, which can take
   # longer than assert_receive's default 100 ms on a slow CI runner.
   @wait 1000
 
-  test "a job goes on when its page is gone, and the page gets it on return", %{key: key} do
-    {:ok, page} = Task.start(fn -> Job.summarize(key, "https://example.com/a") end)
+  test "a job goes on when its page is gone, and the page gets it on return", %{url: url} do
+    {:ok, page} = Task.start(fn -> Job.summarize(url) end)
     assert_receive {:model, model}, @wait
     Process.exit(page, :kill)
 
-    back = Task.async(fn -> Job.summarize(key, "https://example.com/a") end)
+    back = Task.async(fn -> Job.summarize(url) end)
     send(model, {:answer, "First."})
 
-    assert {:ok, %{tldr: "First."}} = Task.await(back)
-    assert {:ok, %{tldr: "First."}} = Job.summarize(key, "https://example.com/a")
+    assert {:ok, %{tldr: "First."}, _saved} = Task.await(back)
     refute_received {:model, _}
   end
 
-  test "fresh runs the summary again", %{key: key} do
-    first = Task.async(fn -> Job.summarize(key, "https://example.com/a") end)
+  test "a finished summary comes from the cache for a day, for every reader", %{url: url} do
+    first = Task.async(fn -> Job.summarize(url, language: "de") end)
     assert_receive {:model, model}, @wait
-    send(model, {:answer, "First."})
-    assert {:ok, %{tldr: "First."}} = Task.await(first)
+    send(model, {:answer, "Erst."})
+    assert {:ok, %{tldr: "Erst."}, nil} = Task.await(first)
 
-    again = Task.async(fn -> Job.summarize(key, "https://example.com/a", fresh: true) end)
+    assert {:ok, %{tldr: "Erst."}, %DateTime{}} = Job.summarize(url, language: "de")
+    refute_received {:model, _}
+  end
+
+  test "fresh runs the summary again and replaces the cached one", %{url: url} do
+    Cache.put(%Tldr.Summary{url: url, kind: :web, tldr: "Old.", points: []}, "en")
+
+    again = Task.async(fn -> Job.summarize(url, fresh: true) end)
     assert_receive {:model, model}, @wait
-    send(model, {:answer, "Second."})
-    assert {:ok, %{tldr: "Second."}} = Task.await(again)
+    send(model, {:answer, "New."})
+    assert {:ok, %{tldr: "New."}, nil} = Task.await(again)
+
+    assert {:ok, %{tldr: "New."}, %DateTime{}} = Job.summarize(url)
+  end
+
+  test "an error is not cached and runs again", %{url: url} do
+    failed = Task.async(fn -> Job.summarize(url) end)
+    assert_receive {:model, model}, @wait
+    send(model, :fail)
+    assert {:error, _reason} = Task.await(failed, 5000)
+
+    assert :miss = Cache.fetch(url, "en")
+  end
+
+  test "an invalid address fails at once" do
+    assert {:error, :invalid_url} = Job.summarize("not an address")
   end
 end

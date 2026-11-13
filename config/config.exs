@@ -8,6 +8,7 @@
 import Config
 
 config :tldr,
+  ecto_repos: [Tldr.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 # Configure the endpoint

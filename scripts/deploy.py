@@ -5,8 +5,8 @@ The deploy workflow runs this after it pushed the image of a commit on main:
 
     python3 scripts/deploy.py --image-tag <full commit sha>
 
-It needs an authenticated `bunny` CLI (BUNNYNET_API_KEY) and the key in
-OPENROUTER_API_KEY. bunny.json names the app, the image and the plain
+It needs an authenticated `bunny` CLI (BUNNYNET_API_KEY), the key in
+OPENROUTER_API_KEY and the cache database in DATABASE_URL. bunny.json names the app, the image and the plain
 environment. SECRET_KEY_BASE lives only in Bunny and is kept as it is.
 """
 
@@ -47,13 +47,14 @@ def the_container(app):
 
 
 def runtime_environment(container, config):
-    """Keep what Bunny holds, then lay bunny.json and the key over it."""
+    """Keep what Bunny holds, then lay bunny.json and the GitHub secrets over it."""
     environment = {item["name"]: item["value"] for item in container["environmentVariables"]}
     require(bool(environment.get("SECRET_KEY_BASE")), "Missing SECRET_KEY_BASE on the Bunny app.")
     require("SECRET_KEY_BASE" not in config["environment"], "SECRET_KEY_BASE belongs in Bunny, not bunny.json.")
     environment.update(config["environment"])
-    environment["OPENROUTER_API_KEY"] = os.environ.get("OPENROUTER_API_KEY", "")
-    require(bool(environment["OPENROUTER_API_KEY"]), "Missing OPENROUTER_API_KEY.")
+    for name in ("OPENROUTER_API_KEY", "DATABASE_URL"):
+        environment[name] = os.environ.get(name, "")
+        require(bool(environment[name]), f"Missing {name}.")
     return [{"name": key, "value": value} for key, value in sorted(environment.items())]
 
 

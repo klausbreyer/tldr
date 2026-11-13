@@ -21,6 +21,14 @@ jobs:
     timeout-minutes: 15
     env:
       MIX_ENV: test
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
@@ -93,4 +101,5 @@ jobs:
         env:
           BUNNYNET_API_KEY: ${{ secrets.BUNNYNET_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           IMAGE_DIGEST: ${{ needs.build.outputs.digest }}

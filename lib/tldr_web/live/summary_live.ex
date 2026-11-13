@@ -8,19 +8,16 @@ defmodule TldrWeb.SummaryLive do
   addresses go into the address bar (`/<address><address>`). Opening that
   address, or reloading it, summarizes them again (`docs/decisions/011`).
 
-  The summaries run as `Tldr.Job`s, so they go on when the page is gone,
-  and the reader's browser keeps the ones that are done
-  (`docs/decisions/012`). Its connect params bring them back:
-
-    * `tab`, the id of the browser tab, finds the tab's jobs again
-    * `kept`, the browser's summaries of the addresses in the address bar
-    * `offset`, the browser's time zone in minutes east of UTC, for the
-      date a kept summary was saved
+  The summaries run as `Tldr.Job`s, so they go on when the page is gone.
+  A summary from the last day comes from `Tldr.Cache`, with the time it was
+  saved and a button to summarize again (`docs/decisions/013`). The connect
+  param `offset`, the browser's time zone in minutes east of UTC, sets the
+  clock of that time.
   """
 
   use TldrWeb, :live_view
 
-  alias Tldr.{Job, Source, Summary}
+  alias Tldr.{Job, Source}
   alias TldrWeb.Words
 
   # Switches the words and the language of the next summaries. The ones
@@ -37,8 +34,6 @@ defmodule TldrWeb.SummaryLive do
        items: [],
        submits: 0,
        embedded: session["embedded"] == true,
-       tab: params["tab"],
-       kept: kept(params["kept"]),
        offset: if(params["offset"] in -900..900, do: params["offset"], else: 0)
      )}
   end
@@ -70,11 +65,11 @@ defmodule TldrWeb.SummaryLive do
      |> push_patch(to: share_path(socket.assigns.items), replace: true)}
   end
 
-  # Summarizes a kept address again and replaces it.
+  # Summarizes a cached address again and replaces it.
   def handle_event("refresh", %{"id" => id}, socket) do
     case Enum.find(socket.assigns.items, &(to_string(&1.id) == id)) do
-      %{saved: _} = item ->
-        item = Map.merge(Map.delete(item, :saved), %{status: :running})
+      %{saved: %DateTime{}} = item ->
+        item = %{item | status: :running, saved: nil}
         socket = run(socket, item, fresh: true)
         {:noreply, assign(socket, items: replace(socket.assigns.items, item))}
 
@@ -87,29 +82,15 @@ defmodule TldrWeb.SummaryLive do
   def handle_async({:summary, id}, result, socket) do
     outcome =
       case result do
-        {:ok, {:ok, summary}} -> %{status: :done, summary: summary}
+        {:ok, {:ok, summary, saved}} -> %{status: :done, summary: summary, saved: saved}
         {:ok, {:error, reason}} -> %{status: :error, error: reason}
         {:exit, _reason} -> %{status: :error, error: :crashed}
       end
 
     item = socket.assigns.items |> Enum.find(&(&1.id == id)) |> Map.merge(outcome)
 
-    {:noreply,
-     socket
-     |> assign(items: replace(socket.assigns.items, item))
-     |> keep(item)}
+    {:noreply, assign(socket, items: replace(socket.assigns.items, item))}
   end
-
-  # Hands a new summary to the browser, which keeps it with today's date.
-  defp keep(socket, %{status: :done, url: url, summary: summary}) when is_binary(url) do
-    push_event(socket, "tldr:keep", %{
-      url: url,
-      language: socket.assigns.language,
-      summary: Map.from_struct(summary)
-    })
-  end
-
-  defp keep(socket, _item), do: socket
 
   defp replace(items, %{id: id} = item),
     do: Enum.map(items, &if(&1.id == id, do: item, else: &1))
@@ -215,12 +196,12 @@ defmodule TldrWeb.SummaryLive do
             title={@item.address}
             class={[
               "truncate text-sm leading-5",
-              (@item.status == :done and !@item[:saved]) && "mb-2"
+              (@item.status == :done and !@item.saved) && "mb-2"
             ]}
           >
             {meta(@item)}
           </div>
-          <div :if={@item.status == :done and @item[:saved]} class="mt-1 mb-3 text-[13px] leading-5">
+          <div :if={@item.status == :done and @item.saved} class="mt-1 mb-3 text-[13px] leading-5">
             {saved(@item, @language, @offset)}
           </div>
           <h2
@@ -311,7 +292,7 @@ defmodule TldrWeb.SummaryLive do
           </button>
           <.open_link href={@item.summary.url} language={@language} />
           <button
-            :if={@item[:saved]}
+            :if={@item.saved}
             type="button"
             class="group -my-3 inline-flex cursor-pointer items-center gap-1.5 py-3"
             phx-click="refresh"
@@ -349,72 +330,20 @@ defmodule TldrWeb.SummaryLive do
     """
   end
 
-  # Puts one item per address in the paste on top. One the browser kept
-  # shows at once, every other one starts its job.
+  # Puts one item per address in the paste on top, each with its job.
   defp summarize(socket, paste) do
-    new_items =
-      paste
-      |> Source.addresses()
-      |> Enum.map(&new_item/1)
-      |> Enum.map(fn item ->
-        case socket.assigns.kept[{item.url, socket.assigns.language}] do
-          nil -> item
-          kept -> Map.merge(item, %{status: :done, summary: kept.summary, saved: kept.saved})
-        end
-      end)
-
-    socket =
-      new_items
-      |> Enum.filter(&(&1.status == :running))
-      |> Enum.reduce(socket, &run(&2, &1))
-
+    new_items = paste |> Source.addresses() |> Enum.map(&new_item/1)
+    socket = Enum.reduce(new_items, socket, &run(&2, &1))
     assign(socket, items: new_items ++ socket.assigns.items)
   end
 
-  # Waits for the item's job. The key finds the job again when this tab
-  # comes back with a new page process; without a tab no one else finds it.
+  # Waits for the item's summary, from the cache or from its job. The
+  # address without its fragment, so every form of a page shares one.
   defp run(socket, item, opts \\ []) do
-    %{tab: tab, language: language} = socket.assigns
-    key = {tab || make_ref(), item.url || item.address, language}
-    opts = [language: language] ++ opts
-
-    start_async(socket, {:summary, item.id}, fn -> Job.summarize(key, item.address, opts) end)
+    opts = [language: socket.assigns.language] ++ opts
+    address = item.url || item.address
+    start_async(socket, {:summary, item.id}, fn -> Job.summarize(address, opts) end)
   end
-
-  # The summaries the browser sent along, by address and language. Anything
-  # malformed is left out; that address is summarized again.
-  @latest_saved 253_402_300_799_999
-
-  defp kept(entries) when is_list(entries) do
-    for %{"url" => url, "language" => language, "saved" => saved, "summary" => summary} <-
-          entries,
-        is_binary(url) and saved in 0..@latest_saved,
-        summary = kept_summary(summary),
-        into: %{},
-        do: {{url, language}, %{summary: summary, saved: saved}}
-  end
-
-  defp kept(_entries), do: %{}
-
-  defp kept_summary(%{"url" => url, "kind" => kind, "tldr" => tldr, "points" => points} = map)
-       when is_binary(url) and kind in ["web", "youtube"] and is_binary(tldr) and
-              is_list(points) do
-    if Enum.all?(points, &is_binary/1) and optional_text?(map["title"]) and
-         optional_text?(map["channel"]) do
-      %Summary{
-        url: url,
-        kind: String.to_existing_atom(kind),
-        title: map["title"],
-        channel: map["channel"],
-        tldr: tldr,
-        points: points
-      }
-    end
-  end
-
-  defp kept_summary(_summary), do: nil
-
-  defp optional_text?(value), do: is_nil(value) or is_binary(value)
 
   # Everything after the host is the paste, its query string included, so
   # the query of an address stays its own. Some proxies merge `//` into `/`.
@@ -438,7 +367,7 @@ defmodule TldrWeb.SummaryLive do
 
   # `url` is the full form of the address without its fragment, which would
   # hide the rest of the address bar from the server. It is nil when the
-  # address is not valid. The browser keeps summaries under it, and a failed
+  # address is not valid. The cache keeps summaries under it, and a failed
   # item's "Open link" leads there.
   defp new_item(address) do
     {kind, url} =
@@ -453,7 +382,8 @@ defmodule TldrWeb.SummaryLive do
       url: url,
       kind: kind,
       video: Source.video_id(address),
-      status: :running
+      status: :running,
+      saved: nil
     }
   end
 
@@ -473,12 +403,12 @@ defmodule TldrWeb.SummaryLive do
   defp source(%{kind: :youtube}), do: "YouTube"
   defp source(%{summary: summary}), do: host(summary.url)
 
-  # A kept summary says when it was saved, on its own line under the source,
-  # so a long source never cuts it off. `saved` is in milliseconds since 1970,
-  # `offset` the reader's time zone.
+  # A cached summary says when it was saved, on its own line under the
+  # source, so a long source never cuts it off. `offset` is the reader's
+  # time zone.
   defp saved(%{saved: saved}, language, offset) do
     shift = &(&1 |> DateTime.add(offset, :minute) |> DateTime.to_naive())
-    date = saved |> DateTime.from_unix!(:millisecond) |> shift.()
+    date = shift.(saved)
     today = DateTime.utc_now() |> shift.() |> NaiveDateTime.to_date()
     Words.t(language, :saved, date: stamp(date, today, language))
   end

@@ -3,12 +3,14 @@ defmodule TldrWeb.PrivacyLiveTest do
 
   import Phoenix.LiveViewTest
 
-  test "the privacy page says that nothing is stored, in the reader's language", %{conn: conn} do
+  test "the privacy page says what is stored and where, in the reader's language", %{
+    conn: conn
+  } do
     {:ok, _view, html} =
       conn |> put_req_header("accept-language", "de") |> live(~p"/privacy")
 
-    assert html =~ "Ich speichere deine Daten nicht."
-    assert html =~ "Dein Browser behält deine letzten Zusammenfassungen"
+    assert html =~ "Ich speichere nichts über dich."
+    assert html =~ "24 Stunden lang in einer Postgres-Datenbank bei Hetzner"
     assert html =~ "OpenRouter"
     assert html =~ "Dein Browser spricht dabei nicht mit YouTube."
     assert html =~ "bunny.net auf Magic Containers in Frankfurt"
@@ -16,7 +18,8 @@ defmodule TldrWeb.PrivacyLiveTest do
     {:ok, _view, html} =
       conn |> put_req_header("accept-language", "en") |> live(~p"/privacy")
 
-    assert html =~ "I do not store your data."
+    assert html =~ "I store nothing about you."
+    assert html =~ "24 hours in a Postgres database at Hetzner"
     assert html =~ "Magic Containers by bunny.net in Frankfurt"
   end
 

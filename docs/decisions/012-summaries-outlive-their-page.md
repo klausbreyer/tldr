@@ -1,7 +1,8 @@
 # ADR-012: Summaries outlive their page
 
 ## Status
-Accepted. Narrows "nothing is kept" of ADR-001.
+Accepted. Narrows "nothing is kept" of ADR-001. The per-tab key, the ten
+minutes in memory and the copy in the browser are superseded by ADR-013.
 
 ## Date
 2026-11-07

@@ -2,7 +2,7 @@
 
 tldr summarizes what is behind an address: a web page or a YouTube video.
 Paste a link, get one sentence and a few points in German or English.
-Phoenix and LiveView, Gemini through OpenRouter, no database.
+Phoenix and LiveView, Gemini through OpenRouter, Postgres as a one-day cache.
 
 ## What makes tldr special?
 
@@ -20,13 +20,13 @@ A summary is one sentence and three to six short points. It says what the
 source claims, not what it is about. Opinions carry their author's name.
 When there is nothing to summarize, it says so and invents nothing.
 
-### 3. Nothing is stored
+### 3. Nothing about the reader is stored
 
-No database, no accounts, no history. A request comes in, a summary goes
-out. The server holds a finished summary for ten minutes, for the tab that
-asked, so a reader who leaves the page still gets it. The reader's own
-browser keeps their summaries (`docs/decisions/012`). A feature that needs
-to remember anything more needs a decision first (`docs/decisions/001`).
+No accounts, no history, nothing about who asked. A finished summary is
+kept with its address for 24 hours and shared by every reader: the next
+one gets it without a new request and can refresh it
+(`docs/decisions/013`). A feature that needs to remember anything more
+needs a decision first.
 
 ## A note from Klaus
 
@@ -66,6 +66,8 @@ Use this language in code, in the UI and when talking to me.
 - **the prompt** means the system prompt and the JSON schema in
   `Tldr.Summarizer`.
 - **the key** means `OPENROUTER_API_KEY`.
+- **the cache** means the summaries of the last 24 hours in Postgres
+  (`Tldr.Cache`), one per address and language, shared by every reader.
 - **language** means the reader's language, `de` or `en` (`Tldr.Language`). It
   sets the words of the interface and the language of new summaries.
 
@@ -178,10 +180,11 @@ browser's `Accept-Language`, else English (`put_language` in the router,
 
 The interface is one LiveView, `TldrWeb.SummaryLive` at `/`. One summary gets
 the single layout, two or more turn the page into a list, newest first. Each
-address runs in its own `Tldr.Job`, which goes on when the page is gone; the
-page waits for it in a `start_async` task. The browser keeps finished
-summaries and sends them back on connect. The list lives in the LiveView
-process. Its addresses go into the address bar (`/<address><address>`),
+address waits in a `start_async` task for `Tldr.Job.summarize/2`. It takes
+a summary of the last 24 hours from `Tldr.Cache`, or joins the one job of
+that address and language, which goes on when the page is gone and puts its
+summary into the cache. A cached summary shows when it was saved and a
+button to summarize again. The list lives in the LiveView process. Its addresses go into the address bar (`/<address><address>`),
 and opening that address summarizes them again (`docs/decisions/011`). So
 `tldr.tf/` in front of a link, or of several in a row, summarizes them. Next
 to it, `TldrWeb.PrivacyLive` at `/privacy` says what happens to the reader's
@@ -191,15 +194,16 @@ share them.
 ## Where code lives
 
 - `lib/tldr/` holds the core: `source`, `page`, `you_tube`, `open_router`,
-  `summarizer`, `job`, `summary`, `config`.
+  `summarizer`, `job`, `cache`, `repo`, `summary`, `config`. The one table,
+  `summaries`, is in `priv/repo/migrations`. A release migrates at boot.
 - `lib/tldr_web/live/summary_live.ex` is the interface,
   `lib/tldr_web/live/privacy_live.ex` the privacy page,
   `lib/tldr_web/live/shortcut_live.ex` the shortcut page. Every LiveView
   mounts `TldrWeb.LanguageHook`, which sets the language and handles the
   switch. `TldrWeb.Layouts` holds the shared column, header and footer.
   `assets/js/app.js`
-  holds the browser code: the copy button, the language cookie, the kept
-  summaries and the connection check when the reader comes back.
+  holds the browser code: the copy button, the language cookie and the
+  connection check when the reader comes back.
 - `assets/css/app.css` holds the colors of v01.io as Tailwind theme colors
   (`brand`, `bg`, `text`, `line`; never `primary`, daisyUI owns that name).
   Like v01.io, text is `text` or `brand` and nothing in between: no dimmed
