@@ -59,6 +59,8 @@ new code deletes what earlier versions kept in the browser.
 - The privacy page names the cache, its 24 hours and Hetzner.
 - Expired rows stay until the next write. With no traffic they stay longer
   than 24 hours, but no reader sees them.
+- A release needs the database when it starts, to migrate. A database
+  that fails later only empties the cache.
 - A deploy needs the `DATABASE_URL` secret in GitHub. Without it the deploy
   stops before it changes Bunny.
 - Tests need a local Postgres. CI starts one as a service.
