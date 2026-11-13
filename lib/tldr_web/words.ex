@@ -42,9 +42,9 @@ defmodule TldrWeb.Words do
       shortcut_mac_hint:
         "Fehlt Kurzbefehle? Suche in den Systemeinstellungen nach Erweiterungen und aktiviere Kurzbefehle unter Teilen.",
       privacy: "Datenschutz",
-      privacy_stored: "Ich speichere deine Daten nicht.",
-      privacy_browser:
-        "Dein Browser behält deine letzten Zusammenfassungen, damit sie beim nächsten Öffnen sofort da sind. Eine fertige Zusammenfassung halte ich zehn Minuten im Arbeitsspeicher, damit sie dich erreicht, wenn du die Seite kurz verlässt.",
+      privacy_stored: "Ich speichere nichts über dich.",
+      privacy_cache:
+        "Jede Zusammenfassung speichere ich mit ihrer Adresse 24 Stunden lang in einer Postgres-Datenbank bei Hetzner, aber nicht, wer sie angefordert hat. Wer dieselbe Adresse in dieser Zeit zusammenfassen lässt, bekommt dieselbe Zusammenfassung. Danach lösche ich sie.",
       privacy_models:
         "Für die Zusammenfassung schicke ich den Text der Seite oder die Adresse des Videos über OpenRouter an Gemini-Modelle von Google.",
       privacy_youtube:
@@ -97,9 +97,9 @@ defmodule TldrWeb.Words do
       shortcut_mac_hint:
         "Is Shortcuts missing? Search System Settings for Extensions and enable Shortcuts under Sharing.",
       privacy: "Privacy",
-      privacy_stored: "I do not store your data.",
-      privacy_browser:
-        "Your browser keeps your latest summaries, so they show at once when you open them again. I hold a finished summary in memory for ten minutes, so it reaches you when you leave the page for a moment.",
+      privacy_stored: "I store nothing about you.",
+      privacy_cache:
+        "I store every summary with its address for 24 hours in a Postgres database at Hetzner, but not who asked for it. Anyone who summarizes the same address in that time gets the same summary. Then I delete it.",
       privacy_models:
         "To make the summary, I send the text of the page or the address of the video through OpenRouter to Gemini models from Google.",
       privacy_youtube:

@@ -3,11 +3,13 @@
 Paste a link to a web page or a YouTube video and get a short summary in
 German or English: one sentence and a few points. The language follows the
 browser and can be switched on the page. Gemini through OpenRouter does the
-reading and watching. No database.
+reading and watching. A summary is kept for 24 hours in Postgres and shared
+by every reader, so the same address costs one request a day.
 
 ## Quick start
 
-1. Install Elixir 1.19 and Erlang/OTP 28.
+1. Install Elixir 1.19, Erlang/OTP 28 and Postgres. Dev and test connect
+   to `localhost` as `postgres`/`postgres` (`tldr_dev`, `tldr_test`).
 2. `cp .env.example .env` and put your OpenRouter key into it.
 3. `make start`: prepares everything, starts the server on port 4000 and
    opens http://localhost:4000
@@ -17,7 +19,7 @@ reading and watching. No database.
 | Command | Description |
 | --- | --- |
 | `make start` | Free port 4000, prepare, start the server, open the browser |
-| `make prepare` | Install dependencies and assets (`mix setup`) |
+| `make prepare` | Install dependencies and assets, create and migrate the database (`mix setup`) |
 | `make check` | What a pull request needs (`mix precommit`) |
 | `mix phx.server` | Development server on port 4000 (`PORT` changes it) |
 | `mix tldr <address> ...` | Summarize addresses on the command line |
@@ -32,6 +34,7 @@ reading and watching. No database.
 | --- | --- | --- |
 | `OPENROUTER_API_KEY` | yes | OpenRouter key. Dev reads it from the main checkout's `.env`. |
 | `PORT` | no | HTTP port, default 4000 |
+| `DATABASE_URL` | prod | Postgres for the cache, `ecto://USER:PASS@HOST/DATABASE`. Add `?ssl=true` for TLS. Dev and test ignore it. |
 | `SECRET_KEY_BASE` | prod | `mix phx.gen.secret` |
 | `PHX_HOST` | prod | Public host name |
 | `CHROME_EXTENSION_ID` | no | Allow this Chrome extension to embed tldr. No external embedding by default. |
@@ -48,7 +51,7 @@ video changes. Reloads and section links keep it open. Click the icon to reopen 
 
 The extension passes addresses as `https://tldr.tf/https://example.com/`.
 It has no history, content scripts, or persistent storage. Opening a source
-again can start another summary, as on the website.
+again within 24 hours shows the cached summary, as on the website.
 
 For a local preview (Node.js 22 or later):
 
@@ -103,6 +106,7 @@ secrets:
 | Secret | Where | How to set it |
 | --- | --- | --- |
 | `OPENROUTER_API_KEY` | GitHub, written to Bunny on every deploy | `gh secret set OPENROUTER_API_KEY --repo klausbreyer/tldr` |
+| `DATABASE_URL` | GitHub, written to Bunny on every deploy | `gh secret set DATABASE_URL --repo klausbreyer/tldr` |
 | `BUNNYNET_API_KEY` | GitHub, for the deploy | `gh secret set BUNNYNET_API_KEY --repo klausbreyer/tldr` |
 | `SECRET_KEY_BASE` | Bunny only, kept by every deploy | Bunny dashboard, app `tldr` |
 

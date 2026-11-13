@@ -30,7 +30,7 @@ defmodule TldrWeb.PrivacyLive do
           {Words.t(@language, :privacy_stored)}
         </p>
         <div class="max-w-[34rem] space-y-4 text-base leading-normal text-pretty">
-          <p>{Words.t(@language, :privacy_browser)}</p>
+          <p>{Words.t(@language, :privacy_cache)}</p>
           <p>{Words.t(@language, :privacy_models)}</p>
           <p>{Words.t(@language, :privacy_youtube)}</p>
           <p>{Words.t(@language, :privacy_hosting)}</p>

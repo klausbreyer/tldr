@@ -31,7 +31,8 @@ defmodule TldrWeb.ConnCase do
     end
   end
 
-  setup _tags do
+  setup tags do
+    Tldr.DataCase.checkout(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 end

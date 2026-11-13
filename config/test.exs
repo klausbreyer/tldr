@@ -1,5 +1,14 @@
 import Config
 
+# Each test runs in its own transaction (`Ecto.Adapters.SQL.Sandbox`).
+config :tldr, Tldr.Repo,
+  username: "postgres",
+  password: "postgres",
+  hostname: "localhost",
+  database: "tldr_test#{System.get_env("MIX_TEST_PARTITION")}",
+  pool: Ecto.Adapters.SQL.Sandbox,
+  pool_size: 10
+
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :tldr, TldrWeb.Endpoint,

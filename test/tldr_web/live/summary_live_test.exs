@@ -113,6 +113,8 @@ defmodule TldrWeb.SummaryLiveTest do
 
     view |> form("#summarize", %{addresses: "example.com/two"}) |> render_submit()
     assert_patch(view, "/https://example.com/twohttps://example.com/one?x=1&y=2")
+    # Jobs are shared by address, so none may outlive its test.
+    render_async(view)
   end
 
   test "a shared address summarizes its addresses again, in the same order", %{conn: conn} do
@@ -247,48 +249,46 @@ defmodule TldrWeb.SummaryLiveTest do
     refute has_element?(view, "#summaries .tldr-pulse")
   end
 
-  test "a new summary goes to the browser to keep", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/")
-    view |> form("#summarize", %{addresses: "example.com/one#part"}) |> render_submit()
-    render_async(view)
+  test "a summary from the last day comes from the cache, with its time and a refresh",
+       %{conn: conn} do
+    Tldr.Cache.put(
+      %Tldr.Summary{
+        url: "https://example.com/one",
+        kind: :web,
+        title: "Cached page",
+        tldr: "The cached summary.",
+        points: ["A cached point."]
+      },
+      "en"
+    )
 
-    # Under the address as the address bar shows it, without the fragment.
-    assert_push_event(view, "tldr:keep", %{
-      url: "https://example.com/one",
-      language: "en",
-      summary: %{tldr: "Summary of Page /one.", kind: :web}
-    })
-  end
-
-  test "a kept summary shows at once with its date, and refresh runs it again", %{conn: conn} do
-    kept = %{
-      "url" => "https://example.com/one",
-      "language" => "en",
-      # 2026-11-07 13:32 UTC, shown in UTC+1
-      "saved" => 1_794_058_320_000,
-      "summary" => %{
-        "url" => "https://example.com/one",
-        "kind" => "web",
-        "title" => "Kept page",
-        "tldr" => "The kept summary.",
-        "points" => ["A kept point."]
-      }
-    }
-
-    conn = put_connect_params(conn, %{"kept" => [kept], "offset" => 60})
+    conn = put_connect_params(conn, %{"offset" => 60})
     {:ok, view, _html} = live(conn, "/https://example.com/onehttps://example.com/two")
 
-    assert has_element?(view, "#summaries", "The kept summary.")
-    assert has_element?(view, "#summaries", "14:32")
     html = render_async(view)
+    assert html =~ "The cached summary."
     assert html =~ "Summary of Page /two."
-    refute html =~ "Summary of Page /one."
+    assert has_element?(view, "#summaries button", "Refresh")
+    assert has_element?(view, "#summaries", "saved today")
 
     view |> element("#summaries button", "Refresh") |> render_click()
     html = render_async(view)
     assert html =~ "Summary of Page /one."
-    refute html =~ "The kept summary."
+    refute html =~ "The cached summary."
     refute has_element?(view, "#summaries button", "Refresh")
+  end
+
+  test "the next reader of an address gets the cached summary without a new request",
+       %{conn: conn} do
+    {:ok, first, _html} = live(conn, "/https://example.com/one")
+    assert render_async(first) =~ "Summary of Page /one."
+    refute has_element?(first, "#summaries button", "Refresh")
+
+    Req.Test.stub(Tldr.OpenRouter, fn _conn -> flunk("the model was asked again") end)
+
+    {:ok, next, _html} = live(build_conn(), "/https://example.com/one")
+    assert render_async(next) =~ "Summary of Page /one."
+    assert has_element?(next, "#summaries button", "Refresh")
   end
 
   test "the saved date says today, drops the current year and keeps older years" do
@@ -303,7 +303,7 @@ defmodule TldrWeb.SummaryLiveTest do
     assert stamp.(~N[2025-12-31 23:59:00], "de") == "31.12.2025, 23:59"
   end
 
-  test "a tab that comes back gets the summary that kept running", %{conn: conn} do
+  test "a page that comes back gets the summary that kept running", %{conn: conn} do
     test = self()
 
     Req.Test.stub(Tldr.OpenRouter, fn conn ->
@@ -315,8 +315,6 @@ defmodule TldrWeb.SummaryLiveTest do
           Req.Test.json(conn, %{"choices" => [%{"message" => %{"content" => answer}}]})
       end
     end)
-
-    conn = put_connect_params(conn, %{"tab" => "tab-#{System.unique_integer()}"})
 
     {:ok, gone, _html} = live(conn, "/https://example.com/one")
     assert_receive {:model, model}, 1000

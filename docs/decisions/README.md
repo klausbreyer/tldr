@@ -17,7 +17,7 @@ files say why.
 
 | ADR | Decision | Date |
 | --- | --- | --- |
-| [001](001-one-phoenix-app-no-database.md) | One Phoenix app, no database ("nothing is kept" narrowed by 012) | 2026-10-29 |
+| [001](001-one-phoenix-app-no-database.md) | One Phoenix app, no database ("nothing is kept" narrowed by 012, "no database" superseded by 013) | 2026-10-29 |
 | [002](002-gemini-through-openrouter.md) | Gemini through OpenRouter, one default model | 2026-10-29 |
 | [003](003-youtube-goes-to-gemini-as-a-video.md) | A YouTube video goes to Gemini as a video, through Google AI Studio | 2026-10-29 |
 | [004](004-web-pages-are-fetched-here-and-sent-as-text.md) | A web page is fetched here and sent as plain text | 2026-10-29 |
@@ -28,4 +28,5 @@ files say why.
 | [009](009-production-runs-on-bunny-and-main-deploys.md) | Production runs on Bunny Magic Containers; every push to main deploys | 2026-10-29 |
 | [010](010-the-addresses-live-in-the-address-bar.md) | The addresses live in the address bar, so the page can be shared (form superseded by 011) | 2026-10-29 |
 | [011](011-the-addresses-follow-the-host.md) | The addresses follow the host: `tldr.tf/<address><address>` | 2026-10-29 |
-| [012](012-summaries-outlive-their-page.md) | Summaries outlive their page: a job on the server, a copy in the browser | 2026-11-07 |
+| [012](012-summaries-outlive-their-page.md) | Summaries outlive their page: a job on the server, a copy in the browser (cache and key superseded by 013) | 2026-11-07 |
+| [013](013-a-shared-cache-for-a-day.md) | A shared cache in Postgres: one summary per address and language for 24 hours | 2026-11-13 |

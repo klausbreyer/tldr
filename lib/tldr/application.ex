@@ -9,9 +9,12 @@ defmodule Tldr.Application do
   def start(_type, _args) do
     children = [
       TldrWeb.Telemetry,
+      Tldr.Repo,
+      # A release migrates the database when it starts; dev and test use mix.
+      {Ecto.Migrator, repos: [Tldr.Repo], skip: System.get_env("RELEASE_NAME") == nil},
       {DNSCluster, query: Application.get_env(:tldr, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Tldr.PubSub},
-      # Summaries that outlive their page (`Tldr.Job`).
+      # Summaries that outlive their page (`Tldr.Job`), one per address.
       {Registry, keys: :unique, name: Tldr.Job.Registry},
       {DynamicSupervisor, name: Tldr.Job.Supervisor},
       # Start to serve requests, typically the last entry

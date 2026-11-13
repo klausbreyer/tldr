@@ -28,56 +28,18 @@ import topbar from "../vendor/topbar"
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const embedded = window.self !== window.top
 
-// The reader's summaries, kept in this browser. Safari on a phone reloads
-// the page after a switch to another app; the kept ones show at once, and
-// the tab id finds the summaries still running on the server
-// (docs/decisions/012). Storage can be off, so every access may fail.
-const keptName = "tldr_kept"
-const keptLimit = 50
+// The server keeps the summaries now (docs/decisions/013). This deletes
+// what earlier versions kept in the browser and in the tab.
+try {
+  localStorage.removeItem("tldr_kept")
+  sessionStorage.removeItem("tldr_tab")
+} catch {}
 
-const readKept = () => {
-  try {
-    return JSON.parse(localStorage.getItem(keptName)) || []
-  } catch {
-    return []
-  }
-}
-
-// Only the ones for the addresses in the address bar go to the server.
-const keptHere = () => {
-  let decoded = location.href
-  try { decoded = decodeURI(decoded) } catch {}
-  return readKept().filter(({url}) => location.href.includes(url) || decoded.includes(url))
-}
-
-const tab = (() => {
-  const random = () => crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`
-  try {
-    const id = sessionStorage.getItem("tldr_tab") || random()
-    sessionStorage.setItem("tldr_tab", id)
-    return id
-  } catch {
-    return random()
-  }
-})()
-
-// A new summary replaces the kept one of its address and language.
-window.addEventListener("phx:tldr:keep", ({detail}) => {
-  const others = readKept().filter(({url, language}) =>
-    url !== detail.url || language !== detail.language)
-  try {
-    const kept = [{...detail, saved: Date.now()}, ...others].slice(0, keptLimit)
-    localStorage.setItem(keptName, JSON.stringify(kept))
-  } catch {}
-})
-
-// A function, so every reconnect sends what the browser keeps by then.
+// The offset sets the clock of the time a cached summary was saved.
 const liveSocket = new LiveSocket(embedded ? "/embedded-live" : "/live", Socket, {
   longPollFallbackMs: 2500,
   params: () => ({
     _csrf_token: csrfToken,
-    tab,
-    kept: keptHere(),
     offset: -new Date().getTimezoneOffset(),
   }),
   hooks: {...colocatedHooks},
@@ -122,7 +84,7 @@ liveSocket.connect()
 // open, so Phoenix notices only at its next heartbeat, up to a minute later,
 // and a summary that finished meanwhile never shows. So on return we ping,
 // and without an answer in time we connect again. The new page process gets
-// the summary from its job (docs/decisions/012).
+// the summary from its job or the cache (docs/decisions/013).
 const pingTimeoutMs = 1500
 let checking = false
 
