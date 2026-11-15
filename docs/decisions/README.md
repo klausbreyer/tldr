@@ -30,3 +30,4 @@ files say why.
 | [011](011-the-addresses-follow-the-host.md) | The addresses follow the host: `tldr.tf/<address><address>` | 2026-10-29 |
 | [012](012-summaries-outlive-their-page.md) | Summaries outlive their page: a job on the server, a copy in the browser (cache and key superseded by 013) | 2026-11-07 |
 | [013](013-a-shared-cache-for-a-day.md) | A shared cache in Postgres: one summary per address and language for 24 hours | 2026-11-13 |
+| [014](014-agpl-3-only.md) | License tldr under AGPL version 3 only | 2026-11-15 |

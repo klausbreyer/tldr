@@ -125,3 +125,13 @@ records why cheaper Flash Lite models did not replace the default.
 ## Architecture
 
 See `AGENTS.md` for how it works and `docs/decisions/` for why.
+
+## License
+
+Copyright (C) 2026 Klaus Breyer.
+
+tldr is licensed under the [GNU Affero General Public License, version 3 only](LICENSE)
+(`AGPL-3.0-only`), without any warranty.
+If you modify tldr and let users interact with it over a network, you must
+offer those users the corresponding source code under this license.
+Third-party code and fonts retain their own licenses.
