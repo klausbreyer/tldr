@@ -8,7 +8,7 @@ by every reader, so the same address costs one request a day.
 
 ## Quick start
 
-1. Install Elixir 1.19, Erlang/OTP 28 and Postgres. Dev and test connect
+1. Install Elixir 1.20, Erlang/OTP 29 and Postgres. Dev and test connect
    to `localhost` as `postgres`/`postgres` (`tldr_dev`, `tldr_test`).
 2. `cp .env.example .env` and put your OpenRouter key into it.
 3. `make start`: prepares everything, starts the server on port 4000 and
